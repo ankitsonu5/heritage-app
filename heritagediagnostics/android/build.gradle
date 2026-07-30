@@ -1,0 +1,33 @@
+buildscript {
+    ext {
+        buildToolsVersion = "36.0.0"
+        minSdkVersion = 24
+        compileSdkVersion = 36
+        targetSdkVersion = 36
+        ndkVersion = "27.1.12297006"
+        kotlinVersion = "2.1.20"
+
+        // Where the NDK actually lives. It has to be a path with no spaces — see the
+        // comment on ndkPath in app/build.gradle for why a space silently breaks the
+        // C++ link. Override per machine with heritage.ndkPath in gradle.properties
+        // or ~/.gradle/gradle.properties; falling back to the SDK's own copy is only
+        // safe when the SDK path is itself space-free.
+        ndkPath = project.findProperty("heritage.ndkPath")
+                ?: "${System.getenv('ANDROID_SDK_ROOT') ?: System.getenv('ANDROID_HOME')}/ndk/${ndkVersion}"
+    }
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle")
+        classpath("com.facebook.react:react-native-gradle-plugin")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        // Reads app/google-services.json and turns it into the resources Firebase
+        // looks up at runtime. Without this plugin the JSON is an inert file and the
+        // app crashes on startup with "No Firebase App '[DEFAULT]' has been created".
+        classpath("com.google.gms:google-services:4.4.2")
+    }
+}
+
+apply plugin: "com.facebook.react.rootproject"

@@ -1,0 +1,11 @@
+{
+  "extends": "@react-native/typescript-config",
+  "compilerOptions": {
+    // DOM is needed by the .web.ts variants (media.web.ts, net.web.ts), which run
+    // in a browser under react-native-web. The native code never touches it.
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["jest", "node"]
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["**/node_modules", "**/Pods"]
+}

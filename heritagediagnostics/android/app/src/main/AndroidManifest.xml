@@ -1,0 +1,79 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Reading a prescription the patient already has in their gallery.
+         READ_MEDIA_IMAGES is the Android 13+ permission; READ_EXTERNAL_STORAGE
+         covers older phones, which is most of this app's users. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <!-- Android 9 and below need this to place report PDFs in public Downloads.
+         Newer Android versions use scoped storage through DownloadManager. -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
+    <!-- Android 13+ will not show a single notification until the user grants this,
+         and it must be asked for at runtime. On 12 and below it is granted at install
+         and the runtime request is a no-op, so the app asks unconditionally. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- The phone must still ring after a reboot, before anyone opens the app: this is
+         what lets FCM re-register the device on boot. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <application
+      android:name=".MainApplication"
+      android:label="@string/app_name"
+      android:icon="@mipmap/ic_launcher"
+      android:roundIcon="@mipmap/ic_launcher_round"
+      android:allowBackup="false"
+      android:theme="@style/AppTheme"
+      android:usesCleartextTraffic="false"
+      android:supportsRtl="true">
+
+      <!-- Which channel FCM drops a notification into when the app is dead and the
+           server did not name one. It must match the channel the app creates at
+           startup and the channelId the backend sends (push.js) — if the id does not
+           resolve, Android files the notification under a silent default and the
+           phone never makes a sound. That failure is invisible: the notification is
+           "delivered", just mute. -->
+      <!-- tools:replace on both: react-native-firebase/messaging ships this same
+           meta-data with an empty channel id and @color/white. Two manifests declaring
+           one attribute is an error, not a silent win for either — the merger refuses
+           to guess. This says ours wins. -->
+      <meta-data
+        android:name="com.google.firebase.messaging.default_notification_channel_id"
+        android:value="heritage-alerts"
+        tools:replace="android:value" />
+      <!-- A notification icon must be a white-on-transparent silhouette. Handing
+           Android the full-colour launcher icon here is why so many apps show a plain
+           white square in the status bar. -->
+      <meta-data
+        android:name="com.google.firebase.messaging.default_notification_icon"
+        android:resource="@drawable/ic_notification"
+        tools:replace="android:resource" />
+      <meta-data
+        android:name="com.google.firebase.messaging.default_notification_color"
+        android:resource="@color/notification_color"
+        tools:replace="android:resource" />
+
+      <activity
+        android:name=".MainActivity"
+        android:label="@string/app_name"
+        android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
+        android:launchMode="singleTask"
+        android:windowSoftInputMode="adjustPan|stateHidden"
+        android:exported="true">
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+      </activity>
+    </application>
+</manifest>

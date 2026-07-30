@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "704372584734",
+    "project_id": "heritage-diagnostics",
+    "storage_bucket": "heritage-diagnostics.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:704372584734:android:b4faeb76a7290a8e28990f",
+        "android_client_info": {
+          "package_name": "com.heritagediagnostics"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCYYQB4E8O6ngdT2E18c_nTd0Ynip986Bk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

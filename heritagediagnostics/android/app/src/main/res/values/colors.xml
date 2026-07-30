@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- C.maroon from the app's theme. Android tints the small status-bar icon and the
+         notification's accent with this, so the pull-down shade matches the app the
+         patient is about to open. -->
+    <color name="notification_color">#5E111B</color>
+</resources>

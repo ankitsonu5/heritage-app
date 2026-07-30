@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="hi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <title>Heritage Diagnostics</title>
+    <style>
+      html, body, #root { height: 100%; margin: 0; }
+      body {
+        font-family: system-ui, 'Segoe UI', 'Noto Sans Devanagari', sans-serif;
+        background: #2A2320;
+        /* The app owns its own scrolling. Without this the page itself gains a
+           second scrollbar and the whole phone frame slides around. */
+        overflow: hidden;
+        overscroll-behavior: none;
+      }
+
+      /* A phone shows no scrollbar track, so neither should the phone frame. The
+         content still scrolls — the chrome just stops eating 15px and stops making
+         short screens look like they overflow. */
+      #root *::-webkit-scrollbar { width: 0; height: 0; }
+      #root * { scrollbar-width: none; -ms-overflow-style: none; }
+      /* The app is designed for a phone. On a desktop browser, frame it in a
+         phone-sized viewport instead of stretching it across a 27" monitor. */
+      #root {
+        max-width: 430px;
+        margin: 0 auto;
+        background: #F6EFE6;
+        box-shadow: 0 0 40px #0006;
+        overflow: hidden;
+        /* React Native's flex:1 needs a flex parent. Without this the root is a
+           block box, every flex:1 view collapses to its content height, and
+           anything positioned against the bottom of the screen lands off-screen. */
+        display: flex;
+        flex-direction: column;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/web/main.tsx"></script>
+  </body>
+</html>

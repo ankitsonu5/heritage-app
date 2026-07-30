@@ -1,0 +1,15 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Debug-only. Metro and the local backend are plain HTTP (10.0.2.2:5000), so a
+         debug build has to allow cleartext. The release manifest forbids it: the
+         shipped app only ever talks to the HTTPS backend, and Play Store review flags
+         a release APK that permits cleartext to any host.
+
+         Keeping this in a debug-only manifest is what lets both be true at once —
+         `tools:replace` overrides the release value for debug builds only. -->
+    <application
+        android:usesCleartextTraffic="true"
+        tools:replace="android:usesCleartextTraffic"
+        tools:targetApi="28" />
+</manifest>

@@ -1,0 +1,17 @@
+diff --git a/node_modules/react-native-tts/android/build.gradle b/node_modules/react-native-tts/android/build.gradle
+index dbbe046..7627772 100644
+--- a/node_modules/react-native-tts/android/build.gradle
++++ b/node_modules/react-native-tts/android/build.gradle
+@@ -4,7 +4,11 @@ def safeExtGet(prop, fallback) {
+ 
+ buildscript {
+     repositories {
+-        jcenter()
++        // jcenter() was shut down and removed from Gradle, so the release build
++        // failed with "Could not find method jcenter()". mavenCentral() serves the
++        // same artifacts.
++        mavenCentral()
++        google()
+     }
+ 
+     dependencies {

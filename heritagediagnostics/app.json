@@ -1,0 +1,30 @@
+{
+  "name": "heritagediagnostics",
+  "displayName": "Heritage Diagnostics",
+  "expo": {
+    "name": "Heritage Diagnostics",
+    "slug": "heritage-diagnostics",
+    "version": "1.1",
+    "orientation": "portrait",
+    "icon": "./ios/heritagediagnostics/Images.xcassets/AppIcon.appiconset/AppIcon-1024.png",
+    "scheme": "heritagediagnostics",
+    "userInterfaceStyle": "light",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "ios": {
+      "bundleIdentifier": "com.sarthaktech.heritagediagnostics",
+      "buildNumber": "2",
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "com.heritagediagnostics",
+      "versionCode": 3
+    },
+    "extra": {
+      "eas": {
+        "projectId": "9c1bf9a0-9542-4ca0-b097-03a1403d85ac"
+      }
+    }
+  }
+}
