@@ -1,142 +1,201 @@
 # Heritage Diagnostics
 
-Home sample-collection service for pathology / radiology / blood tests in Varanasi.
-Hindi-first, built for low-literacy and elderly rural users.
+Heritage Diagnostics is a Hindi-first home sample-collection platform for
+pathology, radiology, and blood tests in Varanasi. It provides a patient and staff
+mobile application, an administration dashboard, and a shared backend API.
 
-One order moves through five roles:
+The order workflow covers five roles:
 
-```
-patient → PRO → collection agent → lab → (admin oversees)
-submitted → pro_review → confirmed → agent_assigned → sample_collected → lab_received → report_ready
-```
-
-## Repository layout
-
-| Path | What it is |
-|---|---|
-| `backend/` | Express + MongoDB (Mongoose) API. **The single source of truth.** |
-| `heritagediagnostics/` | React Native app (patient, PRO, agent, lab) |
-| `admin-web/` | React + Vite admin dashboard (wide tables, server-side pagination) |
-| `reference-app/` | The original clickable HTML prototype. Reference only — not wired to anything. |
-
-## Quick start (no database install needed)
-
-```bash
-# 1. API with an in-memory MongoDB, pre-seeded with demo data at every stage
-cd backend && npm install && npm run dev:memory
-
-# 2. Mobile app (new terminal)
-cd heritagediagnostics && npm install && npm start
-npm run android          # in another terminal
-
-# 3. Admin dashboard (new terminal)
-cd admin-web && npm install && npm run dev     # http://localhost:5173
+```text
+Patient -> PRO -> Collection Agent -> Lab -> Admin oversight
 ```
 
-`dev:memory` boots a real MongoDB in a temp directory and throws it away on exit —
-same models, same state machine, same code paths as production. Nothing persists.
-
-### Running against a persistent database (MongoDB Atlas or local mongod)
-
-```bash
-cd backend
-cp .env.example .env      # set JWT_SECRET (16+ chars) and MONGODB_URI
-npm run seed              # demo data; add -- --reset to wipe orders first
-npm start                 # or: npm run dev  (auto-restart)
+```text
+submitted -> pro_review -> confirmed -> agent_assigned
+          -> sample_collected -> lab_received -> report_ready
 ```
 
-Two things bite people with Atlas:
+## Current version
 
-- **Put the database name in the URI.** `…mongodb.net/heritage_diagnostics?retryWrites=true&w=majority`.
-  Without it Mongo quietly writes into a database called `test`, and you spend an
-  hour wondering where your data went.
-- **`querySrv ECONNREFUSED` does not mean Atlas is down.** `mongodb+srv://` needs a
-  DNS SRV lookup, and some ISP/corporate resolvers refuse them. Set
-  `DNS_SERVERS=8.8.8.8,1.1.1.1` in `.env` and the driver will resolve through those
-  instead. Leave it unset anywhere DNS behaves.
+| Component | Version |
+|---|---:|
+| Android application | 1.2 (`versionCode` 3) |
+| Backend API | 1.0.0 |
+| Admin dashboard | 1.0.0 |
 
-`.env` is gitignored — never commit the connection string.
+## Repository structure
 
-## There is no demo data
+```text
+HERITAGE-APP/
+|-- admin-web/             React, Vite, and Electron administration dashboard
+|-- backend/               Express and MongoDB API
+|-- heritagediagnostics/   React Native patient and staff application
+|-- docs/                  Project and deployment documentation
+|-- screenshots/           Sanitized screenshots for documentation/store listings
+|-- releases/              Local ignored release artifacts and release guidance
+|-- README.md
+`-- render.yaml            Render deployment blueprint
+```
 
-The system starts empty. `npm run seed` creates **one admin account** (from
-`ADMIN_USERNAME` / `ADMIN_PASSWORD` in `backend/.env`) and nothing else:
+Generated dependencies, build output, APKs, app bundles, environment files, and
+IDE state are intentionally excluded from source control.
 
-- **PRO / Agent / Lab accounts** — created by the admin in the dashboard
-  (*PRO team* / *Agents* / *Lab team* → “+ New … account”). The lab needs an
-  account before anyone can upload a report.
-- **Patients** — register themselves in the app.
-- **Orders** — appear when a patient sends a prescription.
+## Prerequisites
 
-`npm run seed -- --reset` wipes everything and recreates only the admin.
+- Node.js 22 or newer
+- npm
+- MongoDB Atlas, local MongoDB, or the included in-memory development server
+- Android Studio with the Android SDK and a compatible JDK for Android builds
 
-## Signing in
+## Backend setup
 
-| Who | How |
-|---|---|
-| Admin | username + password (dashboard, and the app) |
-| PRO / Agent / Lab | username + password given to them by the admin |
-| Patient | phone + password, set when they register |
-
-There is no role picker and no staff sign-up in the app. The role comes from the
-account, and the app routes on what the backend returns. If the app let anyone
-register as a PRO, anyone who installed the APK could read every patient's name,
-phone, address and report.
-
-Patients can be switched to SMS OTP by setting `AUTH_MODE = 'otp'` in
-`heritagediagnostics/src/config.ts` — the OTP screens and the server's
-send-otp / verify-otp endpoints are both still live and still tested.
-
-## Verifying it works
+The backend is the source of truth for authentication, orders, status transitions,
+notifications, and reports.
 
 ```bash
 cd backend
-npm test                  # 21 tests: state machine + all five roles + authorization
-node smoke.js             # drives a real running server end to end
+npm ci
 ```
 
-`smoke.js` needs the server up (`npm run dev:memory` in another terminal). It pushes
-one order through the entire pipeline and asserts every illegal shortcut is refused.
+For a disposable local database:
 
-## The order state machine
+```bash
+npm run dev:memory
+```
 
-`backend/src/status.js` is the only place the lifecycle is defined. Route guards, the
-patient step tracker, chip colours, and queue filters all derive from it.
+For MongoDB Atlas or local MongoDB:
 
-Status is never assigned directly — every change goes through `moveTo()` in
-`backend/src/lifecycle.js`, which validates the transition, writes an
-`OrderStatusHistory` row, and fires notifications. An illegal transition (for example
-`submitted → report_ready`) returns **409** and is impossible to express in a route.
+```bash
+cp .env.example .env
+```
 
-The client mirrors this file in `heritagediagnostics/src/constants/status.ts`, and
-`__tests__/status.test.ts` reads the real backend file to prove the two cannot drift.
+Configure at least:
 
-## Configuration
+```dotenv
+MONGODB_URI=mongodb://127.0.0.1:27017/heritage_diagnostics
+JWT_SECRET=replace-with-a-long-random-secret
+```
 
-All optional. With none of it set, the app is fully functional — OTPs and
-notifications are written to the server console instead of being sent.
+Then run:
 
-| Variable | Effect when unset |
-|---|---|
-| `JWT_SECRET` | **Required.** Server refuses to boot (min 16 chars). |
-| `MONGODB_URI` | Required for `npm run dev` / `start`; unused by `dev:memory`. |
-| `DEV_OTP` | Unset → real random OTPs. Set → every OTP is that code. **Leave unset in production.** |
-| `SMS_API_KEY`, `SMS_SENDER_ID`, `SMS_TEMPLATE_ID` | SMS is logged to console instead of sent (MSG91). |
-| `EXPO_ACCESS_TOKEN` | Push is logged instead of sent. |
-| `SMTP_URL`, `SMTP_FROM` | Report emails are logged instead of sent. |
-| `UPLOAD_DIR` | Defaults to `backend/uploads`. |
-| `ALLOWED_ORIGINS` | Defaults to `*`. Set to the dashboard origin in production. |
+```bash
+npm run seed
+npm start
+```
 
-## Pointing the app at a real device or server
+Never commit `.env`, MongoDB credentials, Firebase service accounts, or production
+secrets.
 
-The Android emulator reaches the host at `10.0.2.2`. For a physical phone or a
-deployment, edit `API_BASE_URL` in `heritagediagnostics/src/config.ts` and rebuild.
+### Backend verification
 
-## Known gaps
+```bash
+npm test
+```
 
-- **Prescriptions and reports are served from `/uploads` without authentication.**
-  The filename is an unguessable UUID, but the URL is the only thing protecting
-  medical data. Put these behind a signed-URL or auth check before going live.
-- Payments are cash-only end to end. `paymentMode: 'online'` exists in the model and
-  the agent's cash checkbox already respects it, but no gateway is wired up.
-- Notifications are best-effort and fire-and-forget; there is no delivery retry queue.
+## Admin dashboard setup
+
+```bash
+cd admin-web
+npm ci
+npm run dev
+```
+
+The local dashboard is available at `http://localhost:5173`. The Vite development
+configuration proxies API requests to the backend.
+
+Build the hosted dashboard:
+
+```bash
+npm run build:web
+```
+
+Build the Electron desktop package when required:
+
+```bash
+npm run dist
+```
+
+## Mobile application setup
+
+```bash
+cd heritagediagnostics
+npm ci
+npm start
+```
+
+In another terminal:
+
+```bash
+npm run android
+```
+
+The Android emulator uses `http://10.0.2.2:5000` for the local backend. Production
+builds use the API URL configured in `heritagediagnostics/src/config.ts`.
+
+### Mobile verification
+
+```bash
+npm run typecheck
+npm run lint
+npm test -- --runInBand
+```
+
+### Android release build
+
+Create an ignored `android/keystore.properties` file for the private upload-key
+configuration, then build an Android App Bundle:
+
+```bash
+cd heritagediagnostics/android
+./gradlew bundleRelease
+```
+
+On Windows PowerShell:
+
+```powershell
+.\gradlew.bat bundleRelease
+```
+
+The bundle is generated under:
+
+```text
+heritagediagnostics/android/app/build/outputs/bundle/release/
+```
+
+Do not commit the bundle, APK, keystore, or keystore passwords.
+
+## APK downloads
+
+APK binaries are distributed through
+[GitHub Releases](../../releases) and are not stored in the source tree.
+
+> Download links will be added here after the next signed GitHub Release is
+> published.
+
+Each release should include:
+
+- A semantic version tag such as `v1.2.0`
+- Release notes and upgrade instructions
+- The signed APK or AAB
+- A SHA-256 checksum
+
+## Deployment
+
+Backend deployment instructions are available in
+[docs/DEPLOY.md](docs/DEPLOY.md). The root `render.yaml` defines the Render
+service blueprint.
+
+Production deployments must configure secrets in the hosting provider rather
+than in source files.
+
+## Security and privacy
+
+This application processes personal and medical information. Never use real
+patient data in demo accounts, screenshots, fixtures, logs, or repository files.
+Review authentication, file access, backups, retention, and applicable privacy
+requirements before a production launch.
+
+## License
+
+No public license has been specified. All rights are reserved unless the project
+owner adds a license file.

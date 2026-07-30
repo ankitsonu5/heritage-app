@@ -4,7 +4,7 @@
   "expo": {
     "name": "Heritage Diagnostics",
     "slug": "heritage-diagnostics",
-    "version": "1.1",
+    "version": "1.2",
     "orientation": "portrait",
     "icon": "./ios/heritagediagnostics/Images.xcassets/AppIcon.appiconset/AppIcon-1024.png",
     "scheme": "heritagediagnostics",

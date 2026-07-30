@@ -1,0 +1,76 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+*.jks
+*.keystore
+keystore.properties
+google-services.local.json
+firebase-service-account.json
+*-firebase-adminsdk-*.json
+
+# Build and release output
+dist/
+dist-web/
+build/
+release/
+coverage/
+*.apk
+*.aab
+*.ipa
+*.exe
+*.dmg
+*.AppImage
+*.jsbundle
+releases/*
+!releases/README.md
+
+# Android generated files
+.gradle/
+.cxx/
+.kotlin/
+local.properties
+captures/
+externalNativeBuild/
+
+# iOS generated files
+ios/Pods/
+DerivedData/
+*.xcworkspace/xcuserdata/
+*.xcuserstate
+
+# IDE and editor files
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+*~
+
+# Operating-system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Logs and caches
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+.parcel-cache/
+.vite/
+.metro-health-check*
+
+# Runtime uploads and local data
+uploads/*
+!uploads/.gitkeep
+reference-app/uploads/
+
