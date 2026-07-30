@@ -1,0 +1,61 @@
+# Render blueprint. In Render: New -> Blueprint -> point it at this repo.
+#
+# MONGODB_URI and JWT_SECRET are marked sync:false, which means Render ASKS you for
+# them and stores them encrypted — they never sit in this file or in git.
+#
+# DEV_OTP is deliberately absent. With it set, every OTP is a fixed code, so anyone
+# could log in as any phone number. It must never exist in production.
+
+services:
+  - type: web
+    name: heritage-diagnostics-api
+    runtime: node
+    plan: free
+    region: singapore          # closest to Varanasi of Render's regions
+    rootDir: backend
+    buildCommand: npm ci --omit=dev
+    startCommand: node src/server.js
+    healthCheckPath: /api/health
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      # Render sets PORT itself; server.js already reads it.
+
+      # Asked for on deploy, stored encrypted.
+      - key: MONGODB_URI
+        sync: false            # mongodb+srv://…/heritage_diagnostics?retryWrites=true&w=majority
+      - key: JWT_SECRET
+        sync: false            # 32+ random characters. NOT the local dev one.
+
+      # The admin dashboard's origin. Update once the .exe/web admin has a home.
+      - key: ALLOWED_ORIGINS
+        sync: false
+
+      # SMS / push / email. Leave blank and the server logs instead of sending —
+      # everything still works, nothing is delivered.
+      - key: SMS_API_KEY
+        sync: false
+      - key: SMS_SENDER_ID
+        sync: false
+      - key: SMS_TEMPLATE_ID
+        sync: false
+
+      # The Firebase service-account JSON, whole, on one line. This is what lets the
+      # server wake a phone that has the app closed; without it push is logged and
+      # never sent, and the only symptom is silence.
+      #
+      # It replaces EXPO_ACCESS_TOKEN, which never did anything: the push adapter
+      # called Expo's API while this app is bare React Native, so no Expo token could
+      # ever have addressed these devices.
+      - key: FIREBASE_SERVICE_ACCOUNT
+        sync: false            # {"type":"service_account","project_id":"heritage-diagnostics",…}
+
+    # Uploads (prescriptions and reports) are written to disk. Render's filesystem
+    # is EPHEMERAL: every deploy and every restart wipes it, so without this disk
+    # the database keeps pointing at files that no longer exist.
+    disk:
+      name: uploads
+      mountPath: /opt/render/project/src/backend/uploads
+      sizeGB: 1

@@ -1,0 +1,813 @@
+/* Self-hosted, no CDN. Inter carries the UI and the numbers (it has proper tabular
+   figures, which a table of amounts needs); Noto Sans Devanagari carries the Hindi.
+   Listing Devanagari first lets the browser pick it per-glyph. */
+@import '@fontsource/mukta/400.css';
+@import '@fontsource/mukta/500.css';
+@import '@fontsource/mukta/600.css';
+@import '@fontsource/mukta/700.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/noto-sans-devanagari/400.css';
+@import '@fontsource/noto-sans-devanagari/500.css';
+@import '@fontsource/noto-sans-devanagari/600.css';
+@import '@fontsource/noto-sans-devanagari/700.css';
+
+:root {
+  --bg: #F6EFE6;
+  --paper: #FFFDFA;
+  --white: #fff;
+
+  --ink: #1F1B1A;
+  --ink-2: #4A4340;
+  --muted: #7A716C;
+
+  --maroon: #5E111B;
+  --wine: #6B1420;
+  --red: #A23A3E;
+  --gold: #B7863A;
+  --green: #1F8A5B;
+
+  --border: #E7DCCC;
+  --border-soft: #F0E7DA;
+
+  --shadow-sm: 0 1px 2px #2a1c1408, 0 1px 3px #2a1c140f;
+  --shadow-md: 0 2px 4px #2a1c140a, 0 8px 24px -8px #2a1c1417;
+
+  --radius: 14px;
+  --radius-sm: 10px;
+
+  --sans: 'Mukta', 'Noto Sans Devanagari', system-ui, sans-serif;
+  --num: 'Inter', 'Mukta', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.01em; }
+
+/* Numbers line up in columns. Without this, a table of ₹ amounts is unreadable. */
+.mono, td.mono, .bar-value, .stat strong, .hero {
+  font-family: var(--num);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.muted { color: var(--muted); font-size: 12.5px; }
+
+.card {
+  background: var(--white);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* --- controls -------------------------------------------------------------- */
+input {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  color: var(--ink);
+  background: var(--paper);
+  transition: border-color .15s, box-shadow .15s;
+}
+input:focus {
+  outline: none;
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px #a23a3e1f;
+}
+
+button {
+  padding: 9px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  color: var(--maroon);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, transform .06s;
+}
+button:hover:not(:disabled) { background: var(--paper); border-color: var(--gold); }
+button:active:not(:disabled) { transform: translateY(1px); }
+button:disabled { opacity: .45; cursor: default; }
+button.primary, .login button {
+  background: var(--red); color: var(--white); border-color: var(--red);
+}
+button.primary:hover, .login button:hover:not(:disabled) {
+  background: var(--maroon); border-color: var(--maroon);
+}
+button.ghost { background: transparent; }
+
+.role-select { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; width: 100%; }
+.login .role-option {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: rgba(255, 255, 255, .82); color: var(--maroon);
+  border: 1.5px solid rgba(94, 17, 27, .2); box-shadow: none;
+}
+.login .role-option:hover:not(:disabled) { background: #fff; border-color: var(--gold); }
+.login .role-option.active,
+.login .role-option.active:hover:not(:disabled) {
+  background: var(--maroon); color: #fff; border-color: var(--maroon);
+  box-shadow: 0 0 0 3px rgba(94, 17, 27, .14);
+}
+
+/* --- login ----------------------------------------------------------------- */
+.center { min-height: 100vh; display: grid; place-items: center; padding: 20px; }
+
+/* The hospital, plainly visible, behind a frosted card.
+   Netflix's trick: the photo stays sharp and readable, and a NEUTRAL black vignette
+   — never a coloured wash — carries the text's contrast. A maroon overlay tinted the
+   whole building pink and hid it; black darkens without recolouring. */
+.login-bg {
+  position: relative;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.login-scrim {
+  position: absolute; inset: 0;
+  background:
+    /* Lighter now, so the hospital shows through — just a gentle darkening behind
+       the card for contrast, and a soft fall-off at the edges. */
+    radial-gradient(70% 60% at 50% 50%, rgba(0, 0, 0, 0.42) 0%, rgba(0, 0, 0, 0.14) 55%, rgba(0, 0, 0, 0.04) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.22) 0%, rgba(0, 0, 0, 0.08) 40%, rgba(0, 0, 0, 0.32) 100%);
+}
+
+.login {
+  position: relative;              /* above the scrim */
+  width: 380px;
+  display: flex; flex-direction: column; gap: 12px;
+  padding: 34px 32px;
+}
+
+/* Netflix's sign-in card: mostly-opaque black, not a pale frosted pane. A light
+   glass tint over a photo leaves white text sitting on whatever happens to be
+   behind it, which is exactly how the old card lost its contrast. Black gives the
+   type a guaranteed floor; a little blur and a hairline border keep it feeling like
+   glass rather than a flat box. */
+.glass {
+  /* Netflix-style: NO blur. The hospital stays razor-sharp everywhere, including
+     behind the card — the card is just a semi-transparent black panel that darkens
+     what's behind it enough for the white text, without smearing the photo. */
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 20px;
+  box-shadow:
+    0 24px 60px -14px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* On glass, ink has to be light — maroon on a dark scrim is unreadable. */
+.glass h1 { font-size: 22px; color: #fff; letter-spacing: -0.01em; }
+.glass .muted { color: rgba(255, 255, 255, 0.72); }
+.glass p { margin: -8px 0 8px; }
+
+.glass input {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #fff;
+}
+.glass input::placeholder { color: rgba(255, 255, 255, 0.6); }
+.glass input:focus {
+  border-color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12);
+}
+
+.glass .eye { color: rgba(255, 255, 255, 0.75); }
+.glass .eye:hover { color: #fff; }
+
+.glass .logo.big {
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--maroon);
+  box-shadow: 0 6px 18px -6px rgba(0, 0, 0, 0.5);
+}
+
+.glass button.primary {
+  background: var(--red);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 20px -8px rgba(162, 58, 62, 0.9);
+}
+.glass button.primary:hover:not(:disabled) { background: #b8474b; border-color: rgba(255, 255, 255, 0.4); }
+
+.logo {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--paper); color: var(--red);
+  display: grid; place-items: center;
+  font-family: var(--num); font-weight: 700; font-size: 13px; letter-spacing: .02em;
+  flex: none;
+}
+.logo.big {
+  width: 52px; height: 52px; font-size: 17px;
+  background: var(--maroon); color: var(--white);
+}
+
+/* The real HIMS crest in place of the "HD" monogram. On white so the emblem's own
+   colours read cleanly, whether it sits on the maroon sidebar or the login card. */
+.logo-img {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: #fff; object-fit: contain; padding: 2px;
+  flex: none; box-shadow: 0 1px 4px rgba(0,0,0,.18);
+}
+.logo-img.big { width: 60px; height: 60px; padding: 3px; }
+
+/* Sidebar shows the full Heritage Diagnostics logo. It sits on a white card so its
+   maroon wordmark stays legible against the maroon sidebar. */
+.brand-full { display: block; background: #fff; border-radius: 12px; padding: 12px 14px; }
+.brand-logo-full { width: 100%; height: auto; display: block; }
+
+/* --- shell ----------------------------------------------------------------- */
+.shell { display: grid; grid-template-columns: 236px 1fr; min-height: 100vh; }
+
+aside {
+  background: linear-gradient(180deg, var(--maroon), var(--wine));
+  padding: 20px 14px;
+  display: flex; flex-direction: column; gap: 22px;
+  position: sticky; top: 0; height: 100vh;
+}
+.brand { display: flex; gap: 11px; align-items: center; color: var(--white); }
+.brand strong { font-size: 15px; letter-spacing: -0.01em; }
+.brand .muted { color: #E6CFC7; font-size: 11.5px; }
+
+aside nav { display: flex; flex-direction: column; gap: 5px; }
+aside nav button {
+  display: flex; align-items: center; gap: 10px;
+  background: transparent; border: none; color: #EBD8D2;
+  text-align: left; padding: 10px 12px; border-radius: var(--radius-sm);
+  font-weight: 500;
+}
+
+/* The generic `button:hover` rule below paints a near-white background. It has
+   higher specificity than a plain descendant selector, so it was winning here —
+   pale text on a pale background, and the sidebar item vanished on hover. These
+   are pinned with :where(:hover) so they beat it without an !important. */
+aside nav button:hover:not(:disabled),
+aside nav button:hover {
+  background: #ffffff1f;
+  border-color: transparent;
+  color: #fff;
+}
+aside nav button.active,
+aside nav button.active:hover:not(:disabled) {
+  /* A cream panel with a red spine, not a plain white block. */
+  background: #FFF4E6;
+  color: var(--maroon);
+  font-weight: 600;
+  border-color: transparent;
+  border-left: 4px solid var(--red);
+  padding-left: 8px;
+  box-shadow: var(--shadow-sm);
+}
+.nav-icon {
+  width: 18px; display: grid; place-items: center;
+  opacity: .8;
+  transition: opacity .15s ease;
+}
+aside nav button.active .nav-icon { opacity: 1; color: var(--red); }
+aside nav button:hover .nav-icon { opacity: 1; }
+
+.logout { margin-top: auto; background: transparent; color: #EBD8D2; border-color: #ffffff33; }
+aside .logout:hover:not(:disabled) { background: #ffffff1f; color: #fff; border-color: #ffffff66; }
+
+main { padding: 24px 30px 34px; overflow-x: auto; }
+
+/* --- top bar --------------------------------------------------------------- */
+.topbar {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 20px;
+  padding-bottom: 18px; margin-bottom: 20px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.topbar h1 { font-size: 23px; color: var(--maroon); }
+.topbar p { margin: 3px 0 0; }
+
+.topbar-actions { display: flex; align-items: center; gap: 12px; }
+
+.lang-switch {
+  display: inline-flex; align-items: center; padding: 3px;
+  border: 1px solid var(--border); border-radius: 999px;
+  background: var(--white); box-shadow: var(--shadow-sm);
+}
+.lang-switch button {
+  min-width: 42px; padding: 5px 10px; border: none; border-radius: 999px;
+  background: transparent; color: var(--muted); font-size: 12px;
+  line-height: 1.4; box-shadow: none;
+}
+.lang-switch button:hover:not(:disabled) { border: none; background: var(--paper); color: var(--maroon); }
+.lang-switch button.active,
+.lang-switch button.active:hover:not(:disabled) {
+  border: none; background: var(--maroon); color: var(--white);
+}
+
+/* --- live badge + bell ------------------------------------------------------ */
+.bell-wrap { display: flex; align-items: center; gap: 12px; position: relative; }
+
+.live {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 11px; border-radius: 20px;
+  font-size: 12px; font-weight: 600;
+  background: #E8F5EE; color: var(--green);
+}
+.live i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.live.on i { animation: pulse 1.8s ease-in-out infinite; }
+.live.off { background: #F3EDE4; color: var(--muted); }
+@keyframes pulse { 50% { opacity: .3; } }
+
+.bell {
+  position: relative;
+  width: 40px; height: 40px; padding: 0;
+  border-radius: 50%; font-size: 17px;
+  display: grid; place-items: center;
+}
+.badge {
+  position: absolute; top: -3px; right: -3px;
+  min-width: 18px; height: 18px; padding: 0 4px;
+  border-radius: 9px; background: var(--red); color: #fff;
+  font-size: 10.5px; font-weight: 700;
+  display: grid; place-items: center;
+  border: 2px solid var(--white);
+}
+
+/* --- notification panel ----------------------------------------------------- */
+.notif-panel {
+  position: absolute; top: 50px; right: 0; z-index: 30;
+  width: 330px; max-height: 420px;
+  display: flex; flex-direction: column;
+  background: var(--white);
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  animation: pop .14s ease;
+}
+.notif-panel header {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 12px 15px; border-bottom: 1px solid var(--border-soft);
+}
+.notif-actions { display: flex; gap: 10px; }
+.link {
+  border: none; background: transparent; padding: 0;
+  font-size: 11.5px; font-weight: 600; color: var(--red);
+  cursor: pointer;
+}
+.link:hover:not(:disabled) { background: transparent; border: none; text-decoration: underline; }
+.notif-list { overflow-y: auto; }
+.notif-list .empty { padding: 26px; text-align: center; margin: 0; }
+
+.notif {
+  width: 100%; display: flex; gap: 9px; align-items: flex-start;
+  padding: 12px 15px; border: none; border-bottom: 1px solid var(--border-soft);
+  border-radius: 0; background: transparent; text-align: left;
+  font-weight: 400; font-size: 13px; color: var(--ink-2);
+  cursor: pointer;
+}
+.notif:hover { background: var(--paper); color: var(--maroon); }
+.notif:last-child { border-bottom: none; }
+.notif .dot {
+  width: 7px; height: 7px; border-radius: 50%; margin-top: 6px; flex: none;
+  background: transparent;
+}
+.notif.unread { background: #FFFBF4; color: var(--ink); font-weight: 500; }
+.notif.unread .dot { background: var(--red); }
+.notif em { display: block; font-style: normal; font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+
+/* --- toasts ----------------------------------------------------------------- */
+.toasts {
+  position: fixed; right: 22px; bottom: 22px; z-index: 60;
+  display: flex; flex-direction: column-reverse; gap: 10px;
+}
+.toast {
+  display: flex; gap: 10px; align-items: center;
+  min-width: 260px; max-width: 340px;
+  padding: 13px 15px; border-radius: 12px;
+  background: var(--white);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--red);
+  box-shadow: var(--shadow-md);
+  animation: slide-in .22s cubic-bezier(.2, .9, .3, 1);
+}
+.toast p { margin: 0; font-size: 13px; color: var(--ink); line-height: 1.45; }
+.toast-icon { font-size: 15px; }
+@keyframes slide-in { from { opacity: 0; transform: translateX(24px); } }
+
+/* --- KPI row --------------------------------------------------------------- */
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+
+.stat {
+  display: flex; align-items: center; gap: 14px;
+  padding: 18px 20px;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.stat:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.stat > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stat strong { font-size: 29px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; }
+
+/* The icon carries the card's meaning; the tint carries its tone. */
+.stat-icon {
+  width: 42px; height: 42px; border-radius: 12px;
+  display: grid; place-items: center;
+  flex: none;
+}
+.tone-red   .stat-icon { background: #F8E8E8; color: var(--red); }
+.tone-red   strong { color: var(--red); }
+.tone-wine  .stat-icon { background: #F6E7EA; color: var(--wine); }
+.tone-wine  strong { color: var(--wine); }
+.tone-gold  .stat-icon { background: #F7EDD9; color: #8A6520; }
+.tone-gold  strong { color: #8A6520; }
+.tone-green .stat-icon { background: #E8F5EE; color: var(--green); }
+.tone-green strong { color: var(--green); }
+
+/* --- charts ---------------------------------------------------------------- */
+.chart-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.chart-grid .card { margin: 0; }
+.chart-grid .card.wide { grid-column: 1 / -1; }
+
+figure.chart { margin: 0; }
+figure.chart figcaption {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  margin-bottom: 14px;
+}
+figure.chart figcaption strong { font-size: 14.5px; color: var(--ink); font-weight: 600; }
+
+.chart-wrap { position: relative; }
+.chart-wrap svg { width: 100%; height: auto; display: block; }
+
+.tooltip {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 12px));
+  background: var(--ink);
+  color: #fff;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: nowrap;
+  pointer-events: none;
+  display: flex; flex-direction: column;
+  box-shadow: var(--shadow-md);
+  z-index: 2;
+}
+.tooltip .muted { color: #C9BFB8; }
+
+/* Horizontal bars (pipeline + agents) */
+.bars { display: flex; flex-direction: column; gap: 13px; }
+.bar-row {
+  display: grid; grid-template-columns: 120px 1fr auto;
+  align-items: center; gap: 12px;
+}
+.bar-label {
+  font-size: 12.5px; color: var(--ink-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* The empty track is visible, so a short bar still reads as "little", not "broken". */
+.bar-track {
+  background: #F3EAdd;
+  border-radius: 999px;
+  height: 14px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width .4s cubic-bezier(.4, 0, .2, 1), opacity .15s ease;
+}
+.bar-value {
+  font-size: 12.5px; font-weight: 600; color: var(--ink);
+  min-width: 54px; text-align: right;
+}
+.chart-note { margin: 14px 0 0; }
+
+details.card summary {
+  cursor: pointer; font-weight: 600; color: var(--maroon); font-size: 13.5px;
+}
+details.card[open] summary { margin-bottom: 12px; }
+
+/* --- table ----------------------------------------------------------------- */
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.pill {
+  padding: 7px 13px; font-size: 12.5px; font-weight: 500;
+  border-radius: 999px;
+  background: transparent;
+  border-color: var(--border);
+  color: var(--ink-2);
+  transition: all .15s ease-in-out;
+}
+.pill:hover:not(:disabled) { background: var(--white); border-color: var(--gold); }
+.pill.active {
+  background: var(--red); color: var(--white); border-color: var(--red);
+  font-weight: 600;
+  box-shadow: 0 2px 6px -1px #a23a3e55;
+  transform: translateY(-1px);
+}
+
+/* --- empty state ------------------------------------------------------------ */
+.empty {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 44px 20px;
+}
+.empty-icon {
+  width: 52px; height: 52px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--paper); color: var(--gold);
+  border: 1px solid var(--border-soft);
+}
+.empty p { margin: 0; }
+
+.table-card { padding: 0; overflow: hidden; }
+.table-card > table { margin: 0; }
+.table-card .pager { padding: 14px 18px; border-top: 1px solid var(--border-soft); }
+
+/* Inline filter pills + optional custom date range + a status line. */
+.list-filter { padding: 14px 18px; border-bottom: 1px solid var(--border-soft); }
+.filter-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.custom-range {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 12px;
+}
+.custom-range input[type="date"] {
+  border: 1.5px solid var(--border); border-radius: 9px; padding: 9px 11px;
+  font-size: 13.5px; color: var(--ink); background: var(--white); min-width: 160px;
+}
+.custom-range input[type="date"]:focus { border-color: var(--gold); outline: none; }
+.custom-range .cr-sep { color: var(--muted); font-size: 13px; }
+.custom-range .primary { padding: 9px 20px; border-radius: 9px; }
+
+.filter-status { margin-top: 10px; font-size: 13px; }
+
+/* Destructive action. Full-strength red, same visual weight as the buttons beside
+   it — a washed-out border read as "disabled" next to Edit and Enable. */
+button.danger {
+  border-color: var(--red);
+  color: var(--red);
+  font-weight: 700;
+}
+button.danger:hover:not(:disabled) { background: var(--red); color: #fff; border-color: var(--red); }
+
+/* Edit / Disable / Delete sit together and must not wrap into a ragged column. */
+.row-actions { white-space: nowrap; }
+.row-actions button { margin-right: 6px; }
+.row-actions button:last-child { margin-right: 0; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th, td {
+  text-align: left; padding: 14px 16px;
+  border-bottom: 1px solid var(--border-soft); vertical-align: middle;
+}
+th {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--muted); font-weight: 600;
+  background: var(--paper);
+  border-bottom: 1.5px solid var(--border);
+  white-space: nowrap;
+}
+td.strong { font-weight: 600; }
+.block { display: block; margin-top: 2px; }
+
+/* Prescription / Report open in a new tab, so they should look like something you
+   click, not like body text that happens to be red. */
+.ghost-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 12px; font-weight: 500;
+  color: var(--maroon); text-decoration: none;
+  background: var(--white);
+  transition: all .15s ease-in-out;
+}
+.ghost-btn:hover {
+  border-color: var(--gold);
+  background: var(--paper);
+  color: var(--red);
+}
+tbody tr:last-child td { border-bottom: none; }
+
+/* Hovering a row turns its text maroon and lifts a marker on the left edge, so the
+   row you are reading is unmistakable in a long table. */
+tbody tr {
+  transition: background .12s ease, color .12s ease, box-shadow .12s ease;
+}
+tbody tr:hover {
+  background: var(--paper);
+  box-shadow: inset 3px 0 0 var(--red);
+}
+tbody tr:hover td,
+tbody tr:hover td .muted,
+tbody tr:hover .mono {
+  color: var(--maroon);
+}
+tbody tr:hover td .muted { opacity: .85; }
+
+.center-cell { text-align: center; padding: 28px; }
+
+.chip {
+  display: inline-block; padding: 4px 10px;
+  border-radius: 20px; font-size: 11.5px; font-weight: 600; white-space: nowrap;
+}
+
+.files { display: flex; gap: 9px; }
+.files a { color: var(--red); font-size: 12.5px; font-weight: 500; text-decoration: none; }
+.files a:hover { text-decoration: underline; }
+
+.pager { display: flex; align-items: center; justify-content: space-between; padding-top: 14px; }
+
+.error-card { border-color: var(--red); color: var(--red); display: flex; gap: 12px; align-items: center; }
+
+.skeleton {
+  background: linear-gradient(90deg, #F1E7DA 25%, #FAF4EC 50%, #F1E7DA 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border: none; height: 78px;
+}
+.skeleton.tall { height: 260px; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* --- add-staff form -------------------------------------------------------- */
+.add-btn { margin-bottom: 18px; }
+.staff-form h2 { font-size: 16px; color: var(--maroon); margin-bottom: 16px; }
+.staff-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+.staff-grid label {
+  display: flex; flex-direction: column; gap: 6px;
+  font-size: 12.5px; color: var(--ink-2); font-weight: 500;
+}
+.staff-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 18px; }
+
+/* --- restricted LAB desktop ------------------------------------------------
+   Cards keep each sample and its PDF control together, which is safer than a
+   wide admin-style table when several reports are being prepared at once. */
+.lab-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.lab-order { margin: 0; }
+.lab-order-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 14px;
+  padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid var(--border-soft);
+}
+.lab-order-head h2 { font-size: 18px; color: var(--maroon); margin-top: 3px; }
+.lab-meta { display: grid; grid-template-columns: 90px 1fr; gap: 12px; margin-bottom: 16px; }
+.lab-meta span {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 11px 12px; border-radius: 10px; background: var(--paper);
+  border: 1px solid var(--border-soft);
+}
+.lab-meta small { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+.lab-meta strong { font-weight: 600; overflow-wrap: anywhere; }
+.lab-primary { width: 100%; }
+.lab-upload { display: grid; gap: 12px; }
+.lab-upload label { display: grid; gap: 6px; color: var(--ink-2); font-size: 12.5px; font-weight: 500; }
+.lab-upload input[type="file"] { background: var(--paper); cursor: pointer; }
+.lab-upload input[type="file"]::file-selector-button {
+  margin-right: 10px; padding: 7px 11px; border: 1px solid var(--border);
+  border-radius: 8px; background: var(--white); color: var(--maroon);
+  font: inherit; font-weight: 600; cursor: pointer;
+}
+.catalog-search {
+  display: grid; grid-template-columns: minmax(240px, 520px) auto;
+  align-items: center; gap: 14px; padding: 16px 18px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.catalog-more { margin: 0; padding: 12px 18px; border-top: 1px solid var(--border-soft); }
+
+/* --- password field with a show/hide eye ------------------------------------
+   The eye is an ICON, not a button-looking thing. It sat inside .login, where
+   `.login button` painted every button solid red — so the toggle rendered as a
+   red block, and inside a <form> it also had to be told not to submit. */
+.pw { position: relative; display: block; width: 100%; }
+.pw input { display: block; padding-right: 52px; }
+
+.eye,
+.login button.eye,
+form button.eye {
+  position: absolute; right: 1px; top: 1px; bottom: 1px;
+  width: 44px; height: auto; margin: 0; padding: 0;
+  display: grid; place-items: center;
+  border: none; border-radius: 0 9px 9px 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  box-shadow: none;
+  transition: color .15s ease, background .15s ease;
+}
+.eye:hover,
+.login button.eye:hover:not(:disabled),
+form button.eye:hover:not(:disabled) {
+  background: rgba(255, 255, 255, .12);
+  border: none;
+  color: var(--maroon);
+}
+.glass button.eye { color: rgba(102, 4, 4, 0.78); }
+.glass button.eye:hover:not(:disabled) { color: #6d0303; }
+.login button.eye {
+  background: rgba(255, 255, 255, .7);
+  border-left: 1px solid rgba(94, 17, 27, .18);
+}
+.login button.eye:hover:not(:disabled) { background: rgba(255, 255, 255, .9); }
+.eye:active,
+.login button.eye:active:not(:disabled) { transform: none; }
+.login button.eye:focus-visible,
+form button.eye:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, .9);
+  outline-offset: -5px;
+}
+
+/* --- phone field: +91 shown, ten digits typed -------------------------------- */
+.phone { position: relative; display: block; }
+.phone .cc {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  font-family: var(--num); font-size: 13.5px; font-weight: 600;
+  color: var(--muted);
+  pointer-events: none;
+}
+.phone input {
+  padding-left: 46px;
+  font-family: var(--num);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .02em;
+}
+
+/* --- SweetAlert ------------------------------------------------------------ */
+.swal-backdrop {
+  position: fixed; inset: 0; z-index: 50;
+  background: #1f1b1a80;
+  backdrop-filter: blur(2px);
+  display: grid; place-items: center;
+  padding: 20px;
+  animation: fade .15s ease;
+}
+.swal {
+  background: var(--white);
+  border-radius: 18px;
+  padding: 28px 26px 20px;
+  width: 340px; max-width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 60px -12px #2a1c1440;
+  animation: pop .18s cubic-bezier(.34, 1.4, .64, 1);
+}
+.swal-icon {
+  width: 58px; height: 58px; border-radius: 50%;
+  border: 2.5px solid; display: grid; place-items: center;
+  font-size: 27px; font-weight: 700; margin: 0 auto 14px;
+}
+.swal h2 { font-size: 18px; color: var(--ink); margin-bottom: 6px; }
+.swal p { margin: 0 0 20px; color: var(--ink-2); font-size: 14px; }
+.swal-actions { display: flex; gap: 9px; }
+.swal-actions button { flex: 1; padding: 11px; }
+
+@keyframes fade { from { opacity: 0; } }
+@keyframes pop { from { opacity: 0; transform: scale(.92) translateY(8px); } }
+
+/* The dashboard is built for a desktop. These breakpoints don't make it a mobile
+   app — they only keep it readable and reachable on a tablet or a small laptop,
+   which is what an admin opening the hosted URL from something other than the
+   office PC will actually have. */
+@media (max-width: 1000px) {
+  .shell { grid-template-columns: 1fr; }
+  aside { position: static; height: auto; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .chart-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  main { padding: 16px 14px 26px; }
+  .stats { grid-template-columns: 1fr; }
+  /* A 380px card plus 32px of padding overflows a 360px phone and the fields get
+     clipped; let it shrink instead. */
+  .login { width: 100%; max-width: 380px; padding: 26px 20px; }
+  .center { padding: 16px; }
+}
+
+/* Wide tables scroll inside their own card rather than dragging the whole page
+   sideways, which would otherwise take the sidebar and header with them.
+   Scoped with :has() to cards that actually hold a table — a blanket overflow on
+   .card would clip any menu or popover that opens out of one. */
+.card:has(> table) { overflow-x: auto; }
+.card > table { min-width: 640px; }

@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F4E8DA;font-family:'Mukta',system-ui,sans-serif;color:#252525}
+a{color:#A00000}a:hover{color:#790000}
+@keyframes hd-pulse{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px 48px;box-sizing:border-box">
+
+<!-- top bar -->
+<sc-if value="{{ hasRole }}" hint-placeholder-val="{{ false }}">
+<div style="width:100%;max-width:980px;display:flex;align-items:center;gap:12px;margin-bottom:16px">
+<button onClick="{{ goLauncher }}" style="display:flex;align-items:center;gap:8px;background:#FFFFFF;border:1.5px solid #B7863A;border-radius:10px;padding:8px 16px;font-family:'Mukta',sans-serif;font-size:15px;font-weight:600;color:#5E111B;cursor:pointer">← सभी Roles / Back</button>
+<div style="font-size:15px;font-weight:700;color:#751725">{{ roleTitle }}</div>
+</div>
+</sc-if>
+
+<!-- ============ LAUNCHER ============ -->
+<sc-if value="{{ isLauncher }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin:24px 0 28px;text-align:center">
+<img src="assets/logo.png" alt="Heritage Diagnostics" style="width:340px;max-width:90%;height:auto">
+<div style="font-size:18px;font-weight:600;color:#5E111B">घर बैठे Sample Collection — Blood · Pathology · Radiology</div>
+<div style="font-size:14px;color:#6D6D6D">Clickable prototype — कोई भी role चुनकर पूरा flow देखें</div>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:18px;justify-content:center;max-width:980px">
+<button onClick="{{ pickUser }}" style="width:290px;background:#FFFFFF;border:1.5px solid #B7863A;border-radius:16px;padding:22px;text-align:left;cursor:pointer;font-family:'Mukta',sans-serif;box-shadow:0 2px 8px rgba(94,17,27,.08)">
+<div style="width:52px;height:52px;border-radius:14px;background:#A00000;color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;margin-bottom:12px">1</div>
+<div style="font-size:20px;font-weight:800;color:#5E111B">मरीज़ / User ऐप</div>
+<div style="font-size:14px;color:#6D6D6D;margin-top:4px">OTP लॉगिन → पर्ची की फोटो भेजें → status देखें → report पाएं</div>
+</button>
+<button onClick="{{ pickPro }}" style="width:290px;background:#FFFFFF;border:1.5px solid #B7863A;border-radius:16px;padding:22px;text-align:left;cursor:pointer;font-family:'Mukta',sans-serif;box-shadow:0 2px 8px rgba(94,17,27,.08)">
+<div style="width:52px;height:52px;border-radius:14px;background:#751725;color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;margin-bottom:12px">2</div>
+<div style="font-size:20px;font-weight:800;color:#5E111B">PRO Panel</div>
+<div style="font-size:14px;color:#6D6D6D;margin-top:4px">नई पर्ची देखें → मरीज़ को फ़ोन करें → confirm → agent चुनें</div>
+</button>
+<button onClick="{{ pickAgent }}" style="width:290px;background:#FFFFFF;border:1.5px solid #B7863A;border-radius:16px;padding:22px;text-align:left;cursor:pointer;font-family:'Mukta',sans-serif;box-shadow:0 2px 8px rgba(94,17,27,.08)">
+<div style="width:52px;height:52px;border-radius:14px;background:#B7863A;color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;margin-bottom:12px">3</div>
+<div style="font-size:20px;font-weight:800;color:#5E111B">Collection Agent ऐप</div>
+<div style="font-size:14px;color:#6D6D6D;margin-top:4px">आज के pickup → sample लें → cash लें → update करें</div>
+</button>
+<button onClick="{{ pickLab }}" style="width:290px;background:#FFFFFF;border:1.5px solid #B7863A;border-radius:16px;padding:22px;text-align:left;cursor:pointer;font-family:'Mukta',sans-serif;box-shadow:0 2px 8px rgba(94,17,27,.08)">
+<div style="width:52px;height:52px;border-radius:14px;background:#5E111B;color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;margin-bottom:12px">4</div>
+<div style="font-size:20px;font-weight:800;color:#5E111B">Lab Confirmation</div>
+<div style="font-size:14px;color:#6D6D6D;margin-top:4px">Sample प्राप्ति confirm करें → report अपलोड करें</div>
+</button>
+<button onClick="{{ pickAdmin }}" style="width:290px;background:#FFFFFF;border:1.5px solid #B7863A;border-radius:16px;padding:22px;text-align:left;cursor:pointer;font-family:'Mukta',sans-serif;box-shadow:0 2px 8px rgba(94,17,27,.08)">
+<div style="width:52px;height:52px;border-radius:14px;background:#252525;color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;margin-bottom:12px">5</div>
+<div style="font-size:20px;font-weight:800;color:#5E111B">Admin Panel (Desktop)</div>
+<div style="font-size:14px;color:#6D6D6D;margin-top:4px">सभी orders, status और collection एक नज़र में</div>
+</button>
+</div>
+</sc-if>
+
+<!-- ============ USER APP ============ -->
+<sc-if value="{{ isUser }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="User App" style="width:390px;max-width:100%;background:#FFF9F2;border:1.5px solid #B7863A;border-radius:32px;box-shadow:0 12px 40px rgba(94,17,27,.15);overflow:hidden;display:flex;flex-direction:column;min-height:760px">
+
+  <!-- app header -->
+  <div style="background:#751725;color:#fff;padding:14px 18px;display:flex;align-items:center;gap:10px">
+    <div style="width:36px;height:36px;border-radius:50%;background:#FFF9F2;display:flex;align-items:center;justify-content:center;font-weight:800;color:#A00000;font-size:15px">HD</div>
+    <div style="flex:1">
+      <div style="font-size:16px;font-weight:700;line-height:1.1">Heritage Diagnostics</div>
+      <div style="font-size:11px;opacity:.85">घर बैठे जांच — Varanasi</div>
+    </div>
+    <button onClick="{{ speakScreen }}" title="आवाज़ में सुनें" style="width:40px;height:40px;border-radius:50%;background:#B7863A;border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 8v4h3l4 4V4L6 8H3z" fill="#fff"></path><path d="M13 7c1 1 1 5 0 6M15 5c2 2 2 8 0 10" stroke="#fff" stroke-width="1.6" stroke-linecap="round"></path></svg>
+    </button>
+  </div>
+
+  <div style="flex:1;display:flex;flex-direction:column;padding:20px;gap:16px;box-sizing:border-box">
+
+  <!-- LOGIN -->
+  <sc-if value="{{ uLogin }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;flex-direction:column;gap:18px;align-items:center;text-align:center;margin-top:28px">
+      <img src="assets/logo.png" alt="logo" style="width:230px;height:auto">
+      <div style="font-size:22px;font-weight:800;color:#5E111B">अपना मोबाइल नंबर डालें<br><span style="font-size:14px;font-weight:500;color:#6D6D6D">Enter your mobile number</span></div>
+      <input value="{{ phone }}" onChange="{{ onPhone }}" placeholder="98765 43210" inputMode="numeric" style="width:100%;box-sizing:border-box;font-size:26px;font-weight:700;letter-spacing:2px;text-align:center;padding:16px;border:2px solid #B7863A;border-radius:14px;background:#FFFFFF;font-family:'Mukta',sans-serif;color:#252525;outline:none">
+      <button onClick="{{ sendOtp }}" style="width:100%;background:#A00000;border:none;border-radius:14px;color:#fff;font-size:22px;font-weight:800;padding:18px;cursor:pointer;font-family:'Mukta',sans-serif" style-hover="background:#790000">OTP भेजें →</button>
+      <div style="font-size:13px;color:#6D6D6D">कोई password नहीं — सिर्फ SMS से आया 4 अंक का code</div>
+    </div>
+  </sc-if>
+
+  <!-- OTP -->
+  <sc-if value="{{ uOtp }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;gap:18px;align-items:center;text-align:center;margin-top:40px">
+      <div style="font-size:22px;font-weight:800;color:#5E111B">SMS से आया code डालें<br><span style="font-size:14px;font-weight:500;color:#6D6D6D">{{ phoneShown }} पर भेजा गया</span></div>
+      <div style="display:flex;gap:12px">
+        <div style="width:56px;height:64px;border:2px solid #B7863A;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;color:#252525">4</div>
+        <div style="width:56px;height:64px;border:2px solid #B7863A;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;color:#252525">7</div>
+        <div style="width:56px;height:64px;border:2px solid #B7863A;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;color:#252525">2</div>
+        <div style="width:56px;height:64px;border:2px solid #B7863A;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;color:#252525">9</div>
+      </div>
+      <button onClick="{{ verifyOtp }}" style="width:100%;background:#A00000;border:none;border-radius:14px;color:#fff;font-size:22px;font-weight:800;padding:18px;cursor:pointer;font-family:'Mukta',sans-serif" style-hover="background:#790000">पुष्टि करें ✓ Verify</button>
+      <div style="font-size:13px;color:#6D6D6D">Code नहीं आया? <span style="color:#A00000;font-weight:700">फिर भेजें</span></div>
+    </div>
+  </sc-if>
+
+  <!-- HOME — variant A: big cards -->
+  <sc-if value="{{ uHomeA }}" hint-placeholder-val="{{ false }}">
+    <div style="font-size:20px;font-weight:800;color:#5E111B">नमस्ते, राम कुमार जी 🙏</div>
+    <button onClick="{{ goCamera }}" style="background:#A00000;border:none;border-radius:20px;color:#fff;padding:24px;display:flex;align-items:center;gap:18px;cursor:pointer;font-family:'Mukta',sans-serif;text-align:left" style-hover="background:#790000">
+      <svg width="52" height="52" viewBox="0 0 52 52" fill="none"><rect x="4" y="12" width="44" height="32" rx="6" fill="#FFF9F2"></rect><rect x="18" y="6" width="16" height="8" rx="3" fill="#FFF9F2"></rect><circle cx="26" cy="28" r="9" fill="#A00000"></circle><circle cx="26" cy="28" r="5" fill="#FFF9F2"></circle></svg>
+      <span><span style="display:block;font-size:22px;font-weight:800;line-height:1.15">डॉक्टर की पर्ची भेजें</span><span style="display:block;font-size:13px;opacity:.9;margin-top:3px">फोटो खींचें — बाकी हम संभालेंगे</span></span>
+    </button>
+    <button onClick="{{ goStatus }}" style="background:#FFFFFF;border:1.5px solid #B7863A;border-radius:20px;padding:20px;display:flex;align-items:center;gap:16px;cursor:pointer;font-family:'Mukta',sans-serif;text-align:left">
+      <div style="width:46px;height:46px;border-radius:50%;background:#F6EDDF;display:flex;align-items:center;justify-content:center"><svg width="26" height="26" viewBox="0 0 26 26" fill="none"><circle cx="13" cy="13" r="10" stroke="#B7863A" stroke-width="2.5"></circle><path d="M13 7v6l4 3" stroke="#B7863A" stroke-width="2.5" stroke-linecap="round"></path></svg></div>
+      <span style="flex:1"><span style="display:block;font-size:18px;font-weight:800;color:#5E111B">मेरा ऑर्डर कहाँ है?</span><span style="display:block;font-size:13px;color:#6D6D6D">Agent आज 11 बजे आएंगे</span></span>
+      <span style="background:#F8E8E8;color:#A00000;font-size:12px;font-weight:700;border-radius:8px;padding:4px 10px">चालू</span>
+    </button>
+    <button onClick="{{ goReport }}" style="background:#FFFFFF;border:1.5px solid #B7863A;border-radius:20px;padding:20px;display:flex;align-items:center;gap:16px;cursor:pointer;font-family:'Mukta',sans-serif;text-align:left">
+      <div style="width:46px;height:46px;border-radius:50%;background:#F6EDDF;display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="3" stroke="#B7863A" stroke-width="2.2"></rect><path d="M8 8h8M8 12h8M8 16h5" stroke="#B7863A" stroke-width="2.2" stroke-linecap="round"></path></svg></div>
+      <span style="flex:1"><span style="display:block;font-size:18px;font-weight:800;color:#5E111B">मेरी रिपोर्ट</span><span style="display:block;font-size:13px;color:#6D6D6D">1 रिपोर्ट तैयार है</span></span>
+      <span style="width:12px;height:12px;border-radius:50%;background:#A00000;animation:hd-pulse 1.5s infinite"></span>
+    </button>
+  </sc-if>
+
+  <!-- HOME — variant B: one giant button -->
+  <sc-if value="{{ uHomeB }}" hint-placeholder-val="{{ false }}">
+    <div style="font-size:20px;font-weight:800;color:#5E111B;text-align:center">नमस्ते, राम कुमार जी 🙏</div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px">
+      <button onClick="{{ goCamera }}" style="width:230px;height:230px;border-radius:50%;background:#A00000;border:8px solid #F8E8E8;color:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;font-family:'Mukta',sans-serif;box-shadow:0 10px 30px rgba(160,0,0,.35)" style-hover="background:#790000">
+        <svg width="72" height="72" viewBox="0 0 52 52" fill="none"><rect x="4" y="12" width="44" height="32" rx="6" fill="#FFF9F2"></rect><rect x="18" y="6" width="16" height="8" rx="3" fill="#FFF9F2"></rect><circle cx="26" cy="28" r="9" fill="#A00000"></circle><circle cx="26" cy="28" r="5" fill="#FFF9F2"></circle></svg>
+        <span style="font-size:22px;font-weight:800;line-height:1.2">पर्ची की फोटो<br>भेजें</span>
+      </button>
+      <div style="font-size:14px;color:#6D6D6D;text-align:center">बस एक फोटो — हमारी टीम आपको फ़ोन करेगी</div>
+    </div>
+  </sc-if>
+
+  <!-- HOME — variant C: grid -->
+  <sc-if value="{{ uHomeC }}" hint-placeholder-val="{{ false }}">
+    <div style="font-size:20px;font-weight:800;color:#5E111B">नमस्ते, राम कुमार जी 🙏</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <button onClick="{{ goCamera }}" style="background:#A00000;border:none;border-radius:18px;color:#fff;padding:20px 14px;display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;font-family:'Mukta',sans-serif" style-hover="background:#790000">
+        <svg width="44" height="44" viewBox="0 0 52 52" fill="none"><rect x="4" y="12" width="44" height="32" rx="6" fill="#FFF9F2"></rect><rect x="18" y="6" width="16" height="8" rx="3" fill="#FFF9F2"></rect><circle cx="26" cy="28" r="9" fill="#A00000"></circle><circle cx="26" cy="28" r="5" fill="#FFF9F2"></circle></svg>
+        <span style="font-size:16px;font-weight:800;text-align:center;line-height:1.2">पर्ची भेजें</span>
+      </button>
+      <button onClick="{{ goStatus }}" style="background:#FFFFFF;border:1.5px solid #B7863A;border-radius:18px;padding:20px 14px;display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;font-family:'Mukta',sans-serif">
+        <svg width="40" height="40" viewBox="0 0 26 26" fill="none"><circle cx="13" cy="13" r="10" stroke="#B7863A" stroke-width="2.5"></circle><path d="M13 7v6l4 3" stroke="#B7863A" stroke-width="2.5" stroke-linecap="round"></path></svg>
+        <span style="font-size:16px;font-weight:800;color:#5E111B;text-align:center;line-height:1.2">मेरा ऑर्डर</span>
+      </button>
+      <button onClick="{{ goReport }}" style="background:#FFFFFF;border:1.5px solid #B7863A;border-radius:18px;padding:20px 14px;display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;font-family:'Mukta',sans-serif">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="3" stroke="#B7863A" stroke-width="2.2"></rect><path d="M8 8h8M8 12h8M8 16h5" stroke="#B7863A" stroke-width="2.2" stroke-linecap="round"></path></svg>
+        <span style="font-size:16px;font-weight:800;color:#5E111B;text-align:center;line-height:1.2">रिपोर्ट</span>
+      </button>
+      <button onClick="{{ callPro }}" style="background:#FFFFFF;border:1.5px solid #B7863A;border-radius:18px;padding:20px 14px;display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;font-family:'Mukta',sans-serif">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none"><path d="M5 4c0 8 7 15 15 15v-4l-4-1-2 2c-3-1.5-5-3.5-6-6l2-2-1-4H5z" stroke="#B7863A" stroke-width="2.2" stroke-linejoin="round"></path></svg>
+        <span style="font-size:16px;font-weight:800;color:#5E111B;text-align:center;line-height:1.2">मदद / फ़ोन</span>
+      </button>
+    </div>
+  </sc-if>
+
+  <!-- CAMERA -->
+  <sc-if value="{{ uCamera }}" hint-placeholder-val="{{ false }}">
+    <div style="font-size:19px;font-weight:800;color:#5E111B;text-align:center">पर्ची को साफ रोशनी में रखें<br><span style="font-size:13px;font-weight:500;color:#6D6D6D">Keep the prescription in good light</span></div>
+    <sc-if value="{{ notCaptured }}" hint-placeholder-val="{{ true }}">
+      <div style="flex:none;height:330px;border-radius:18px;border:2.5px dashed #B7863A;background:repeating-linear-gradient(45deg,#F6EDDF,#F6EDDF 12px,#FFF9F2 12px,#FFF9F2 24px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px">
+        <div style="font-family:ui-monospace,monospace;font-size:13px;color:#6D6D6D">camera viewfinder</div>
+        <div style="font-size:15px;font-weight:700;color:#5E111B">📄 पर्ची यहाँ दिखेगी</div>
+      </div>
+      <button onClick="{{ capture }}" style="align-self:center;width:84px;height:84px;border-radius:50%;background:#A00000;border:6px solid #F8E8E8;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#790000">
+        <span style="width:30px;height:30px;border-radius:50%;background:#fff;display:block"></span>
+      </button>
+      <div style="text-align:center;font-size:14px;color:#6D6D6D">लाल बटन दबाएँ — फोटो खिंच जाएगी</div>
+    </sc-if>
+    <sc-if value="{{ captured }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:none;height:300px;border-radius:18px;border:2.5px solid #B7863A;background:#FFFFFF;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;position:relative">
+        <div style="position:absolute;top:12px;right:12px;background:#1F8A5B;color:#fff;font-size:13px;font-weight:700;border-radius:8px;padding:4px 10px">✓ साफ फोटो</div>
+        <div style="width:75%;height:75%;background:repeating-linear-gradient(0deg,#F4E8DA,#F4E8DA 10px,#fff 10px,#fff 26px);border:1px solid #F4E8DA;border-radius:8px;display:flex;align-items:flex-start;justify-content:center;padding-top:14px;box-sizing:border-box"><span style="font-family:ui-monospace,monospace;font-size:12px;color:#6D6D6D">doctor's prescription photo</span></div>
+      </div>
+      <div style="display:flex;gap:12px">
+        <button onClick="{{ retake }}" style="flex:1;background:#FFFFFF;border:2px solid #B7863A;border-radius:14px;color:#5E111B;font-size:17px;font-weight:800;padding:15px;cursor:pointer;font-family:'Mukta',sans-serif">फिर से लें</button>
+        <button onClick="{{ sendSlip }}" style="flex:2;background:#A00000;border:none;border-radius:14px;color:#fff;font-size:19px;font-weight:800;padding:15px;cursor:pointer;font-family:'Mukta',sans-serif" style-hover="background:#790000">भेजें → Send</button>
+      </div>
+    </sc-if>
+  </sc-if>
+
+  <!-- SENT -->
+  <sc-if value="{{ uSent }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center">
+      <div style="width:110px;height:110px;border-radius:50%;background:#1F8A5B;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(31,138,91,.3)"><svg width="56" height="56" viewBox="0 0 24 24" fill="none"><path d="M5 13l5 5L20 7" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+      <div style="font-size:24px;font-weight:800;color:#5E111B">पर्ची पहुँच गई! ✓</div>
+      <div style="font-size:16px;color:#252525;max-width:280px">हमारी टीम (PRO) <b>10 मिनट में</b> आपको फ़ोन करेगी और सब कुछ समझाएगी।</div>
+      <div style="background:#F6EDDF;border:1.5px solid #B7863A;border-radius:12px;padding:10px 18px;font-size:15px;font-weight:700;color:#5E111B">ऑर्डर नंबर: HD-1043</div>
+      <button onClick="{{ goStatus }}" style="width:100%;background:#A00000;border:none;border-radius:14px;color:#fff;font-size:19px;font-weight:800;padding:16px;cursor:pointer;font-family:'Mukta',sans-serif" style-hover="background:#790000">ऑर्डर देखें →</button>
+    </div>
+  </sc-if>
+
+  <!-- STATUS -->
+  <sc-if value="{{ uStatus }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;align-items:baseline;gap:10px"><div style="font-size:20px;font-weight:800;color:#5E111B">मेरा ऑर्डर</div><div style="font-size:13px;color:#6D6D6D">HD-1043 · CBC, Sugar · ₹450</div></div>
+    <div style="background:#FFFFFF;border:1.5px solid #B7863A;border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:0">
+      <sc-for list="{{ steps }}" as="st" hint-placeholder-count="5">
+        <div style="display:flex;gap:14px">
+          <div style="display:flex;flex-direction:column;align-items:center">
+            <div style="width:34px;height:34px;border-radius:50%;background:{{ st.bg }};border:2.5px solid {{ st.border }};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:{{ st.fg }}">{{ st.mark }}</div>
+            <sc-if value="{{ st.line }}" hint-placeholder-val="{{ true }}"><div style="width:3px;flex:1;min-height:26px;background:{{ st.lineColor }}"></div></sc-if>
+          </div>
+          <div style="padding-bottom:18px">
+            <div style="font-size:17px;font-weight:800;color:{{ st.titleColor }}">{{ st.hi }}</div>
+            <div style="font-size:12.5px;color:#6D6D6D">{{ st.en }}</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <button onClick="{{ callPro }}" style="background:#FFFFFF;border:2px solid #A00000;border-radius:14px;color:#A00000;font-size:18px;font-weight:800;padding:15px;cursor:pointer;font-family:'Mukta',sans-serif;display:flex;align-items:center;justify-content:center;gap:10px">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M5 4c0 8 7 15 15 15v-4l-4-1-2 2c-3-1.5-5-3.5-6-6l2-2-1-4H5z" stroke="#A00000" stroke-width="2.2" stroke-linejoin="round"></path></svg>
+      PRO को फ़ोन करें
+    </button>
+  </sc-if>
+
+  <!-- REPORT -->
+  <sc-if value="{{ uReport }}" hint-placeholder-val="{{ false }}">
+    <div style="font-size:20px;font-weight:800;color:#5E111B">मेरी रिपोर्ट</div>
+    <div style="background:#FFFFFF;border:1.5px solid #B7863A;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:46px;height:46px;border-radius:12px;background:#F8E8E8;display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="3" stroke="#A00000" stroke-width="2.2"></rect><path d="M8 8h8M8 12h8M8 16h5" stroke="#A00000" stroke-width="2.2" stroke-linecap="round"></path></svg></div>
+        <div style="flex:1"><div style="font-size:17px;font-weight:800;color:#5E111B">CBC + Sugar रिपोर्ट</div><div style="font-size:13px;color:#6D6D6D">HD-1043 · आज, 4:30 बजे</div></div>
+        <span style="background:#E8F5EE;color:#1F8A5B;font-size:12px;font-weight:800;border-radius:8px;padding:4px 10px">तैयार ✓</span>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button style="flex:1;background:#A00000;border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:800;padding:13px;cursor:pointer;font-family:'Mukta',sans-serif" style-hover="background:#790000">⬇ डाउनलोड PDF</button>
+        <button style="flex:1;background:#FFFFFF;border:2px solid #B7863A;border-radius:12px;color:#5E111B;font-size:16px;font-weight:800;padding:13px;cursor:pointer;font-family:'Mukta',sans-serif">देखें</button>
+      </div>
+      <div style="font-size:12.5px;color:#6D6D6D;text-align:center">यही रिपोर्ट SMS और email पर भी भेज दी गई है</div>
+    </div>
+    <div style="font-size:15px;font-weight:800;color:#5E111B;margin-top:6px">पुराने ऑर्डर</div>
+    <sc-for list="{{ history }}" as="h" hint-placeholder-count="2">
+      <div style="background:#FFFFFF;border:1px solid #F4E8DA;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px">
+        <div style="flex:1"><div style="font-size:15px;font-weight:700;color:#252525">{{ h.tests }}</div><div style="font-size:12.5px;color:#6D6D6D">{{ h.id }} · {{ h.date }}</div></div>
+        <span style="font-size:13px;font-weight:700;color:#B7863A">{{ h.amount }}</span>
+      </div>
+    </sc-for>
+  </sc-if>
+
+  </div>
+
+  <!-- bottom nav -->
+  <sc-if value="{{ uNav }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;border-top:1.5px solid #F4E8DA;background:#FFFFFF">
+    <button onClick="{{ goHome }}" style="flex:1;background:none;border:none;padding:10px 0 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:'Mukta',sans-serif">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M4 11l8-7 8 7v9a1 1 0 01-1 1h-5v-6h-4v6H5a1 1 0 01-1-1v-9z" stroke="{{ navHomeColor }}" stroke-width="2.2" stroke-linejoin="round"></path></svg>
+      <span style="font-size:12px;font-weight:800;color:{{ navHomeColor }}">घर</span>
+    </button>
+    <button onClick="{{ goStatus }}" style="flex:1;background:none;border:none;padding:10px 0 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:'Mukta',sans-serif">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><circle cx="13" cy="13" r="10" stroke="{{ navStatusColor }}" stroke-width="2.4"></circle><path d="M13 7v6l4 3" stroke="{{ navStatusColor }}" stroke-width="2.4" stroke-linecap="round"></path></svg>
+      <span style="font-size:12px;font-weight:800;color:{{ navStatusColor }}">ऑर्डर</span>
+    </button>
+    <button onClick="{{ goReport }}" style="flex:1;background:none;border:none;padding:10px 0 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:'Mukta',sans-serif">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="3" stroke="{{ navReportColor }}" stroke-width="2.2"></rect><path d="M8 8h8M8 12h8M8 16h5" stroke="{{ navReportColor }}" stroke-width="2.2" stroke-linecap="round"></path></svg>
+      <span style="font-size:12px;font-weight:800;color:{{ navReportColor }}">रिपोर्ट</span>
+    </button>
+  </div>
+  </sc-if>
+</div>
+</sc-if>
+
+<!-- ============ PRO PANEL ============ -->
+<sc-if value="{{ isPro }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="PRO Panel" style="width:390px;max-width:100%;background:#FFF9F2;border:1.5px solid #B7863A;border-radius:32px;box-shadow:0 12px 40px rgba(94,17,27,.15);overflow:hidden;display:flex;flex-direction:column;min-height:760px">
+  <div style="background:#751725;color:#fff;padding:14px 18px;display:flex;align-items:center;gap:10px">
+    <div style="width:36px;height:36px;border-radius:50%;background:#B7863A;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px">PRO</div>
+    <div style="flex:1"><div style="font-size:16px;font-weight:700;line-height:1.1">PRO Panel — Sunita</div><div style="font-size:11px;opacity:.85">Heritage Diagnostics</div></div>
+    <span style="background:#A00000;font-size:12px;font-weight:800;border-radius:10px;padding:3px 10px">3 नई</span>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;padding:18px;gap:14px;box-sizing:border-box">
+
+  <sc-if value="{{ pList }}" hint-placeholder-val="{{ true }}">
+    <div style="font-size:18px;font-weight:800;color:#5E111B">नई पर्चियाँ / New requests</div>
+    <sc-for list="{{ proOrders }}" as="o" hint-placeholder-count="3">
+      <button onClick="{{ o.open }}" style="background:#FFFFFF;border:1.5px solid #B7863A;border-radius:16px;padding:14px;display:flex;gap:12px;cursor:pointer;font-family:'Mukta',sans-serif;text-align:left;align-items:center">
+        <div style="width:54px;height:66px;border-radius:8px;background:repeating-linear-gradient(0deg,#F4E8DA,#F4E8DA 6px,#fff 6px,#fff 14px);border:1px solid #F4E8DA;flex:none"></div>
+        <div style="flex:1"><div style="font-size:16px;font-weight:800;color:#252525">{{ o.name }}</div><div style="font-size:13px;color:#6D6D6D">{{ o.village }} · {{ o.phone }}</div><div style="font-size:12.5px;color:#B7863A;font-weight:700">{{ o.time }}</div></div>
+        <span style="background:{{ o.chipBg }};color:{{ o.chipFg }};font-size:11.5px;font-weight:800;border-radius:8px;padding:4px 9px;white-space:nowrap">{{ o.chip }}</span>
+      </button>
+    </sc-for>
+  </sc-if>
+
+  <sc-if value="{{ pDetail }}" hint-placeholder-val="{{ false }}">
+    <button onClick="{{ proBack }}" style="align-self:flex-start;background:none;border:none;color:#A00000;font-size:15px;font-weight:800;cursor:pointer;font-family:'Mukta',sans-serif;padding:0">← सूची पर वापस</button>
+    <div style="background:#FFFFFF;border:1.5px solid #B7863A;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-size:18px;font-weight:800;color:#5E111B">{{ selName }}</div><div style="font-size:13px;color:#6D6D6D">{{ selId }}</div></div>
+      <div style="height:210px;border-radius:12px;background:repeating-linear-gradient(0deg,#F4E8DA,#F4E8DA 10px,#fff 10px,#fff 26px);border:1px solid #F4E8DA;display:flex;align-items:flex-start;justify-content:center;padding-top:12px;box-sizing:border-box"><span style="font-family:ui-monospace,monospace;font-size:12px;color:#6D6D6D">prescription photo (zoom to read)</span></div>
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px">
+        <span style="color:#6D6D6D">गाँव</span><b>{{ selVillage }}</b>
+        <span style="color:#6D6D6D">मोबाइल</span><b>{{ selPhone }}</b>
+        <span style="color:#6D6D6D">जांच</span><b>CBC, Blood Sugar (fasting)</b>
+        <span style="color:#6D6D6D">अनुमानित राशि</span><b style="color:#A00000">₹450 — cash on collection</b>
+      </div>
+    </div>
+    <button onClick="{{ proCall }}" style="background:#FFFFFF;border:2px solid #A00000;border-radius:14px;color:#A00000;font-size:18px;font-weight:800;padding:14px;cursor:pointer;font-family:'Mukta',sans-serif">📞 मरीज़ को फ़ोन करें{{ calledMark }}</button>
+    <sc-if value="{{ notProConfirmed }}" hint-placeholder-val="{{ true }}">
+      <button onClick="{{ proConfirm }}" style="background:#A00000;border:none;border-radius:14px;color:#fff;font-size:19px;font-weight:800;padding:16px;cursor:pointer;font-family:'Mukta',sans-serif" style-hover="background:#790000">✓ Confirm करें — Agent चुनें</button>
+    </sc-if>
+    <sc-if value="{{ pAssign }}" hint-placeholder-val="{{ false }}">
+      <div style="font-size:16px;font-weight:800;color:#5E111B">Agent चुनें</div>
+      <sc-for list="{{ agents }}" as="ag" hint-placeholder-count="2">
+        <button onClick="{{ ag.assign }}" style="background:#FFFFFF;border:1.5px solid {{ ag.border }};border-radius:14px;padding:13px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;font-family:'Mukta',sans-serif;text-align:left">
+          <div style="width:40px;height:40px;border-radius:50%;background:#F6EDDF;display:flex;align-items:center;justify-content:center;font-weight:800;color:#751725">{{ ag.initial }}</div>
+          <div style="flex:1"><div style="font-size:15px;font-weight:800;color:#252525">{{ ag.name }}</div><div style="font-size:12.5px;color:#6D6D6D">{{ ag.zone }} · आज {{ ag.load }} pickup</div></div>
+          <span style="font-size:13px;font-weight:800;color:{{ ag.mark }}">{{ ag.markText }}</span>
+        </button>
+      </sc-for>
+      <sc-if value="{{ assigned }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#E8F5EE;border:1.5px solid #1F8A5B;border-radius:12px;padding:12px 16px;font-size:15px;font-weight:700;color:#1F8A5B;text-align:center">✓ Assign हो गया — मरीज़ और agent दोनों को SMS चला गया</div>
+      </sc-if>
+    </sc-if>
+  </sc-if>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ AGENT APP ============ -->
+<sc-if value="{{ isAgent }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Agent App" style="width:390px;max-width:100%;background:#FFF9F2;border:1.5px solid #B7863A;border-radius:32px;box-shadow:0 12px 40px rgba(94,17,27,.15);overflow:hidden;display:flex;flex-direction:column;min-height:760px">
+  <div style="background:#B7863A;color:#fff;padding:14px 18px;display:flex;align-items:center;gap:10px">
+    <div style="width:36px;height:36px;border-radius:50%;background:#751725;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px">वि</div>
+    <div style="flex:1"><div style="font-size:16px;font-weight:700;line-height:1.1">विनोद — Collection Agent</div><div style="font-size:11px;opacity:.9">आज: 4 pickup · रामनगर zone</div></div>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;padding:18px;gap:14px;box-sizing:border-box">
+
+  <sc-if value="{{ aList }}" hint-placeholder-val="{{ true }}">
+    <div style="font-size:18px;font-weight:800;color:#5E111B">आज के pickup</div>
+    <sc-for list="{{ pickups }}" as="p" hint-placeholder-count="3">
+      <button onClick="{{ p.open }}" style="background:#FFFFFF;border:1.5px solid {{ p.border }};border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;font-family:'Mukta',sans-serif;text-align:left">
+        <div style="width:44px;height:44px;border-radius:12px;background:#F6EDDF;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#751725">{{ p.slot }}</div>
+        <div style="flex:1"><div style="font-size:16px;font-weight:800;color:#252525">{{ p.name }}</div><div style="font-size:13px;color:#6D6D6D">{{ p.addr }}</div></div>
+        <span style="background:{{ p.chipBg }};color:{{ p.chipFg }};font-size:11.5px;font-weight:800;border-radius:8px;padding:4px 9px;white-space:nowrap">{{ p.chip }}</span>
+      </button>
+    </sc-for>
+  </sc-if>
+
+  <sc-if value="{{ aDetail }}" hint-placeholder-val="{{ false }}">
+    <button onClick="{{ agentBack }}" style="align-self:flex-start;background:none;border:none;color:#A00000;font-size:15px;font-weight:800;cursor:pointer;font-family:'Mukta',sans-serif;padding:0">← आज के pickup</button>
+    <div style="background:#FFFFFF;border:1.5px solid #B7863A;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px">
+      <div style="font-size:19px;font-weight:800;color:#5E111B">राम कुमार · HD-1043</div>
+      <div style="font-size:14px;color:#252525">📍 रामनगर, मकान नं. 42, मंदिर के पास</div>
+      <div style="font-size:14px;color:#252525">🧪 CBC, Blood Sugar — <b>खाली पेट</b></div>
+      <div style="font-size:15px;font-weight:800;color:#A00000">लेना है: ₹450 (cash)</div>
+      <button style="background:#FFFFFF;border:2px solid #B7863A;border-radius:12px;color:#5E111B;font-size:15px;font-weight:800;padding:11px;cursor:pointer;font-family:'Mukta',sans-serif">📞 मरीज़ को फ़ोन करें</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <button onClick="{{ markSample }}" style="display:flex;align-items:center;gap:14px;background:{{ sampleBg }};border:2px solid {{ sampleBorder }};border-radius:16px;padding:16px;cursor:pointer;font-family:'Mukta',sans-serif;text-align:left">
+        <div style="width:40px;height:40px;border-radius:50%;background:{{ sampleCircle }};display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:800">{{ sampleMark }}</div>
+        <span style="font-size:18px;font-weight:800;color:#252525">Sample ले लिया</span>
+      </button>
+      <button onClick="{{ markCash }}" style="display:flex;align-items:center;gap:14px;background:{{ cashBg }};border:2px solid {{ cashBorder }};border-radius:16px;padding:16px;cursor:pointer;font-family:'Mukta',sans-serif;text-align:left">
+        <div style="width:40px;height:40px;border-radius:50%;background:{{ cashCircle }};display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:800">{{ cashMark }}</div>
+        <span style="font-size:18px;font-weight:800;color:#252525">₹450 cash मिल गया</span>
+      </button>
+      <div style="font-size:12.5px;color:#6D6D6D;text-align:center">Online payment — अगले phase में (QR यहीं दिखेगा)</div>
+      <button onClick="{{ agentComplete }}" disabled="{{ agentNotReady }}" style="background:{{ completeBg }};border:none;border-radius:14px;color:#fff;font-size:19px;font-weight:800;padding:16px;cursor:pointer;font-family:'Mukta',sans-serif">✓ पूरा करें — Lab भेजें</button>
+      <sc-if value="{{ agentDone }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#E8F5EE;border:1.5px solid #1F8A5B;border-radius:12px;padding:12px 16px;font-size:15px;font-weight:700;color:#1F8A5B;text-align:center">✓ Update हो गया — sample lab की ओर</div>
+      </sc-if>
+    </div>
+  </sc-if>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ LAB ============ -->
+<sc-if value="{{ isLab }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Lab Confirmation" style="width:640px;max-width:100%;background:#FFFFFF;border:1.5px solid #B7863A;border-radius:20px;box-shadow:0 12px 40px rgba(94,17,27,.12);overflow:hidden">
+  <div style="background:#751725;color:#fff;padding:16px 22px;display:flex;align-items:center;gap:12px">
+    <div style="font-size:18px;font-weight:800">🔬 Lab — आज आए sample</div>
+    <div style="font-size:13px;opacity:.85">Heritage Diagnostics, Varanasi</div>
+  </div>
+  <div style="padding:20px;display:flex;flex-direction:column;gap:12px">
+    <sc-for list="{{ labRows }}" as="l" hint-placeholder-count="3">
+      <div style="border:1.5px solid #F4E8DA;border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:16px">
+        <div style="width:44px;height:44px;border-radius:12px;background:#F8E8E8;display:flex;align-items:center;justify-content:center;font-weight:800;color:#A00000;font-size:13px">{{ l.tube }}</div>
+        <div style="flex:1"><div style="font-size:16px;font-weight:800;color:#252525">{{ l.name }} · {{ l.id }}</div><div style="font-size:13px;color:#6D6D6D">{{ l.tests }} · agent: {{ l.agent }}</div></div>
+        <sc-if value="{{ l.pending }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ l.confirm }}" style="background:#A00000;border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:800;padding:10px 18px;cursor:pointer;font-family:'Mukta',sans-serif" style-hover="background:#790000">✓ प्राप्त हुआ</button>
+        </sc-if>
+        <sc-if value="{{ l.received }}" hint-placeholder-val="{{ false }}">
+          <span style="background:#E8F5EE;color:#1F8A5B;font-size:13px;font-weight:800;border-radius:8px;padding:6px 12px">प्राप्त ✓</span>
+          <button style="background:#FFFFFF;border:2px solid #B7863A;border-radius:10px;color:#5E111B;font-size:14px;font-weight:800;padding:9px 14px;cursor:pointer;font-family:'Mukta',sans-serif">⬆ Report अपलोड</button>
+        </sc-if>
+      </div>
+    </sc-for>
+    <div style="font-size:13px;color:#6D6D6D">Report अपलोड होते ही मरीज़ को SMS + email और app notification अपने-आप चला जाता है।</div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ ADMIN ============ -->
+<sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Admin Panel" style="width:1080px;max-width:100%;background:#FFFFFF;border:1.5px solid #B7863A;border-radius:16px;box-shadow:0 12px 40px rgba(94,17,27,.12);overflow:hidden;display:flex;min-height:620px">
+  <div style="width:210px;background:#751725;color:#fff;padding:20px 0;display:flex;flex-direction:column;gap:2px;flex:none">
+    <div style="padding:0 20px 18px;display:flex;align-items:center;gap:10px"><div style="width:34px;height:34px;border-radius:50%;background:#FFF9F2;display:flex;align-items:center;justify-content:center;font-weight:800;color:#A00000;font-size:13px">HD</div><div style="font-size:14px;font-weight:800;line-height:1.2">Heritage<br>Admin</div></div>
+    <div style="padding:11px 20px;background:rgba(255,255,255,.12);border-left:4px solid #B7863A;font-size:14px;font-weight:700">📋 Orders</div>
+    <div style="padding:11px 20px;font-size:14px;opacity:.8">👥 Users</div>
+    <div style="padding:11px 20px;font-size:14px;opacity:.8">🧑‍💼 PRO team</div>
+    <div style="padding:11px 20px;font-size:14px;opacity:.8">🛵 Agents</div>
+    <div style="padding:11px 20px;font-size:14px;opacity:.8">🔬 Lab</div>
+    <div style="padding:11px 20px;font-size:14px;opacity:.8">💰 Collection</div>
+  </div>
+  <div style="flex:1;padding:24px;display:flex;flex-direction:column;gap:18px;background:#FFF9F2">
+    <div style="display:flex;align-items:center;gap:14px"><div style="font-size:20px;font-weight:800;color:#5E111B">आज का overview</div><div style="font-size:13px;color:#6D6D6D">11 July 2026</div></div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+      <div style="background:#FFFFFF;border:1.5px solid #F4E8DA;border-radius:14px;padding:16px"><div style="font-size:13px;color:#6D6D6D">नई पर्चियाँ</div><div style="font-size:30px;font-weight:800;color:#A00000">12</div></div>
+      <div style="background:#FFFFFF;border:1.5px solid #F4E8DA;border-radius:14px;padding:16px"><div style="font-size:13px;color:#6D6D6D">Confirm हुए</div><div style="font-size:30px;font-weight:800;color:#751725">9</div></div>
+      <div style="background:#FFFFFF;border:1.5px solid #F4E8DA;border-radius:14px;padding:16px"><div style="font-size:13px;color:#6D6D6D">Sample lab में</div><div style="font-size:30px;font-weight:800;color:#B7863A">6</div></div>
+      <div style="background:#FFFFFF;border:1.5px solid #F4E8DA;border-radius:14px;padding:16px"><div style="font-size:13px;color:#6D6D6D">Cash collection</div><div style="font-size:30px;font-weight:800;color:#1F8A5B">₹4,850</div></div>
+    </div>
+    <div style="background:#FFFFFF;border:1.5px solid #F4E8DA;border-radius:14px;overflow:hidden">
+      <div style="display:grid;grid-template-columns:1.1fr 1.4fr 1.4fr 1fr 1fr 1.2fr;gap:0;padding:12px 18px;background:#F6EDDF;font-size:12.5px;font-weight:800;color:#5E111B">
+        <div>Order</div><div>मरीज़</div><div>जांच</div><div>राशि</div><div>Agent</div><div>Status</div>
+      </div>
+      <sc-for list="{{ adminRows }}" as="r" hint-placeholder-count="5">
+        <div style="display:grid;grid-template-columns:1.1fr 1.4fr 1.4fr 1fr 1fr 1.2fr;gap:0;padding:13px 18px;border-top:1px solid #F4E8DA;font-size:14px;align-items:center">
+          <div style="font-weight:700;color:#751725">{{ r.id }}</div><div>{{ r.name }}</div><div style="color:#6D6D6D">{{ r.tests }}</div><div style="font-weight:700">{{ r.amount }}</div><div style="color:#6D6D6D">{{ r.agent }}</div>
+          <div><span style="background:{{ r.chipBg }};color:{{ r.chipFg }};font-size:12px;font-weight:800;border-radius:8px;padding:4px 10px">{{ r.status }}</span></div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;homeVariant&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;बड़े कार्ड&quot;, &quot;एक बड़ा बटन&quot;, &quot;ग्रिड&quot;], &quot;default&quot;: &quot;बड़े कार्ड&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;User ऐप&quot;}, &quot;voiceGuidance&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;User ऐप&quot;}}">
+class Component extends DCLogic {
+  state = {
+    role: null,
+    uScreen: 'login', phone: '',
+    captured: false,
+    proScreen: 'list', proSel: null, proCalled: false, proConfirmed: false, assignedTo: null,
+    agentScreen: 'list', sampleTaken: false, cashTaken: false, agentDone: false,
+    labReceived: {}
+  };
+
+  speak(t) {
+    try {
+      if ((this.props.voiceGuidance ?? true) === false) return;
+      const u = new SpeechSynthesisUtterance(t);
+      u.lang = 'hi-IN'; u.rate = 0.95;
+      speechSynthesis.cancel(); speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+
+  screenVoice() {
+    const s = this.state.uScreen;
+    const map = {
+      login: 'अपना मोबाइल नंबर डालें और लाल बटन दबाएँ',
+      otp: 'एस एम एस से आया चार अंक का कोड डालें',
+      home: 'पर्ची भेजने के लिए लाल बटन दबाएँ',
+      camera: 'पर्ची को साफ रोशनी में रखें और लाल गोल बटन दबाएँ',
+      sent: 'आपकी पर्ची पहुँच गई है, हमारी टीम आपको फ़ोन करेगी',
+      status: 'यहाँ आपके ऑर्डर की स्थिति दिख रही है',
+      report: 'आपकी रिपोर्ट तैयार है, डाउनलोड बटन दबाएँ'
+    };
+    this.speak(map[s] || map.home);
+  }
+
+  renderVals() {
+    const S = this.state;
+    const set = (o) => this.setState(o);
+    const variant = this.props.homeVariant ?? 'बड़े कार्ड';
+    const role = S.role;
+    const u = S.uScreen;
+
+    const roleTitles = { user: 'मरीज़ / User ऐप', pro: 'PRO Panel', agent: 'Collection Agent ऐप', lab: 'Lab Confirmation', admin: 'Admin Panel' };
+
+    // user status steps
+    const cur = 2; // demo: agent on the way
+    const stepDefs = [
+      ['पर्ची भेजी', 'Prescription sent'],
+      ['PRO ने confirm किया', 'Confirmed on call'],
+      ['Agent आ रहा है', 'Agent on the way — आज 11 बजे'],
+      ['Sample लिया गया', 'Sample collected'],
+      ['रिपोर्ट तैयार', 'Report ready — SMS/email']
+    ];
+    const steps = stepDefs.map((d, i) => {
+      const done = i < cur, active = i === cur;
+      return {
+        hi: d[0], en: d[1],
+        mark: done ? '✓' : String(i + 1),
+        bg: done ? '#1F8A5B' : active ? '#A00000' : '#FFFFFF',
+        border: done ? '#1F8A5B' : active ? '#A00000' : '#D9CBB8',
+        fg: done || active ? '#FFFFFF' : '#6D6D6D',
+        titleColor: active ? '#A00000' : done ? '#252525' : '#6D6D6D',
+        line: i < stepDefs.length - 1,
+        lineColor: i < cur ? '#1F8A5B' : '#E8DCC9'
+      };
+    });
+
+    const history = [
+      { id: 'HD-0961', tests: 'Thyroid Profile', date: '02 जून 2026', amount: '₹650' },
+      { id: 'HD-0874', tests: 'CBC', date: '14 मार्च 2026', amount: '₹300' }
+    ];
+
+    // PRO data
+    const rawPro = [
+      { key: 'a', name: 'राम कुमार', village: 'रामनगर', phone: '98765 43210', time: '10 मिनट पहले', chip: 'नई', chipBg: '#F8E8E8', chipFg: '#A00000' },
+      { key: 'b', name: 'सीता देवी', village: 'चोलापुर', phone: '91234 56780', time: '25 मिनट पहले', chip: 'नई', chipBg: '#F8E8E8', chipFg: '#A00000' },
+      { key: 'c', name: 'मोहन यादव', village: 'सारनाथ', phone: '99887 76655', time: '1 घंटा पहले', chip: 'फ़ोन बाकी', chipBg: '#F6EDDF', chipFg: '#B7863A' }
+    ];
+    const proOrders = rawPro.map(o => ({ ...o, open: () => set({ proScreen: 'detail', proSel: o.key, proCalled: false, proConfirmed: false, assignedTo: null }) }));
+    const sel = rawPro.find(o => o.key === S.proSel) || rawPro[0];
+
+    const rawAgents = [
+      { key: 'v', initial: 'वि', name: 'विनोद कुमार', zone: 'रामनगर zone', load: 3 },
+      { key: 's', initial: 'सु', name: 'सुरेश पटेल', zone: 'चोलापुर zone', load: 5 }
+    ];
+    const agents = rawAgents.map(a => ({
+      ...a,
+      border: S.assignedTo === a.key ? '#1F8A5B' : '#B7863A',
+      mark: S.assignedTo === a.key ? '#1F8A5B' : '#A00000',
+      markText: S.assignedTo === a.key ? '✓ Assigned' : 'चुनें →',
+      assign: () => set({ assignedTo: a.key })
+    }));
+
+    // Agent pickups
+    const rawPickups = [
+      { key: 'p1', slot: '11:00', name: 'राम कुमार', addr: 'रामनगर, मकान 42', chip: 'अगला', chipBg: '#F8E8E8', chipFg: '#A00000', border: '#A00000' },
+      { key: 'p2', slot: '12:30', name: 'सीता देवी', addr: 'चोलापुर, स्कूल के पास', chip: 'बाकी', chipBg: '#F6EDDF', chipFg: '#B7863A', border: '#B7863A' },
+      { key: 'p3', slot: '09:15', name: 'मोहन यादव', addr: 'सारनाथ रोड', chip: 'हो गया ✓', chipBg: '#E8F5EE', chipFg: '#1F8A5B', border: '#F4E8DA' }
+    ];
+    const pickups = rawPickups.map(p => ({ ...p, open: () => set({ agentScreen: 'detail', sampleTaken: false, cashTaken: false, agentDone: false }) }));
+    const agentReady = S.sampleTaken && S.cashTaken;
+
+    // Lab rows
+    const rawLab = [
+      { key: 'l1', tube: 'EDTA', name: 'मोहन यादव', id: 'HD-1041', tests: 'CBC', agent: 'विनोद' },
+      { key: 'l2', tube: 'SST', name: 'राम कुमार', id: 'HD-1043', tests: 'CBC, Sugar', agent: 'विनोद' },
+      { key: 'l3', tube: 'FLU', name: 'सीता देवी', id: 'HD-1044', tests: 'Sugar (F)', agent: 'सुरेश' }
+    ];
+    const labRows = rawLab.map(l => ({
+      ...l,
+      pending: !S.labReceived[l.key],
+      received: !!S.labReceived[l.key],
+      confirm: () => set({ labReceived: { ...S.labReceived, [l.key]: true } })
+    }));
+
+    const adminRows = [
+      { id: 'HD-1043', name: 'राम कुमार', tests: 'CBC, Sugar', amount: '₹450', agent: 'विनोद', status: 'Agent गया', chipBg: '#F6EDDF', chipFg: '#B7863A' },
+      { id: 'HD-1044', name: 'सीता देवी', tests: 'Sugar (F)', amount: '₹200', agent: 'सुरेश', status: 'Confirm हुआ', chipBg: '#F8E8E8', chipFg: '#A00000' },
+      { id: 'HD-1042', name: 'गीता सिंह', tests: 'X-Ray chest', amount: '₹550', agent: '—', status: 'PRO के पास', chipBg: '#F8E8E8', chipFg: '#A00000' },
+      { id: 'HD-1041', name: 'मोहन यादव', tests: 'CBC', amount: '₹300', agent: 'विनोद', status: 'Lab में', chipBg: '#EDE9F8', chipFg: '#5B4A9E' },
+      { id: 'HD-1039', name: 'रीना देवी', tests: 'Thyroid', amount: '₹650', agent: 'सुरेश', status: 'रिपोर्ट भेजी ✓', chipBg: '#E8F5EE', chipFg: '#1F8A5B' }
+    ];
+
+    const homeActive = u === 'home';
+    const statusActive = u === 'status' || u === 'sent';
+    const reportActive = u === 'report';
+
+    return {
+      // routing
+      hasRole: !!role, isLauncher: !role, roleTitle: roleTitles[role] || '',
+      isUser: role === 'user', isPro: role === 'pro', isAgent: role === 'agent', isLab: role === 'lab', isAdmin: role === 'admin',
+      goLauncher: () => set({ role: null }),
+      pickUser: () => set({ role: 'user' }),
+      pickPro: () => set({ role: 'pro', proScreen: 'list' }),
+      pickAgent: () => set({ role: 'agent', agentScreen: 'list' }),
+      pickLab: () => set({ role: 'lab' }),
+      pickAdmin: () => set({ role: 'admin' }),
+
+      // user app
+      uLogin: u === 'login', uOtp: u === 'otp',
+      uHomeA: u === 'home' && variant === 'बड़े कार्ड',
+      uHomeB: u === 'home' && variant === 'एक बड़ा बटन',
+      uHomeC: u === 'home' && variant === 'ग्रिड',
+      uCamera: u === 'camera', uSent: u === 'sent', uStatus: u === 'status', uReport: u === 'report',
+      uNav: u !== 'login' && u !== 'otp',
+      phone: S.phone, phoneShown: S.phone || '98765 43210',
+      onPhone: (e) => set({ phone: e.target.value }),
+      sendOtp: () => { set({ uScreen: 'otp' }); this.speak('एस एम एस से आया कोड डालें'); },
+      verifyOtp: () => { set({ uScreen: 'home' }); this.speak('नमस्ते! पर्ची भेजने के लिए लाल बटन दबाएँ'); },
+      goHome: () => set({ uScreen: 'home' }),
+      goCamera: () => { set({ uScreen: 'camera', captured: false }); this.speak('पर्ची को साफ रोशनी में रखें और लाल गोल बटन दबाएँ'); },
+      goStatus: () => set({ uScreen: 'status' }),
+      goReport: () => set({ uScreen: 'report' }),
+      capture: () => set({ captured: true }),
+      retake: () => set({ captured: false }),
+      captured: S.captured, notCaptured: !S.captured,
+      sendSlip: () => { set({ uScreen: 'sent' }); this.speak('पर्ची पहुँच गई। हमारी टीम आपको फ़ोन करेगी'); },
+      callPro: () => this.speak('पी आर ओ को फ़ोन लगाया जा रहा है'),
+      speakScreen: () => this.screenVoice(),
+      steps, history,
+      navHomeColor: homeActive ? '#A00000' : '#6D6D6D',
+      navStatusColor: statusActive ? '#A00000' : '#6D6D6D',
+      navReportColor: reportActive ? '#A00000' : '#6D6D6D',
+
+      // pro
+      pList: S.proScreen === 'list', pDetail: S.proScreen === 'detail',
+      proOrders,
+      proBack: () => set({ proScreen: 'list' }),
+      selName: sel.name, selId: 'HD-1043', selVillage: sel.village, selPhone: sel.phone,
+      proCall: () => set({ proCalled: true }),
+      calledMark: S.proCalled ? '  ✓ बात हो गई' : '',
+      proConfirm: () => set({ proConfirmed: true }),
+      notProConfirmed: !S.proConfirmed, pAssign: S.proConfirmed,
+      agents, assigned: !!S.assignedTo,
+
+      // agent
+      aList: S.agentScreen === 'list', aDetail: S.agentScreen === 'detail',
+      pickups,
+      agentBack: () => set({ agentScreen: 'list' }),
+      markSample: () => set({ sampleTaken: !S.sampleTaken }),
+      markCash: () => set({ cashTaken: !S.cashTaken }),
+      sampleBg: S.sampleTaken ? '#E8F5EE' : '#FFFFFF',
+      sampleBorder: S.sampleTaken ? '#1F8A5B' : '#D9CBB8',
+      sampleCircle: S.sampleTaken ? '#1F8A5B' : '#D9CBB8',
+      sampleMark: S.sampleTaken ? '✓' : '',
+      cashBg: S.cashTaken ? '#E8F5EE' : '#FFFFFF',
+      cashBorder: S.cashTaken ? '#1F8A5B' : '#D9CBB8',
+      cashCircle: S.cashTaken ? '#1F8A5B' : '#D9CBB8',
+      cashMark: S.cashTaken ? '✓' : '',
+      agentNotReady: !agentReady,
+      completeBg: agentReady ? '#A00000' : '#D9CBB8',
+      agentComplete: () => { if (agentReady) set({ agentDone: true }); },
+      agentDone: S.agentDone,
+
+      // lab + admin
+      labRows, adminRows
+    };
+  }
+}
+</script>
+</body>
+</html>

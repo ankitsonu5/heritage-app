@@ -1,0 +1,9 @@
+# Vercel builds from source; it only needs the app and its config. Without this the
+# CLI uploads the whole folder — including release/, whose NSIS installer is over
+# Vercel's 100 MB per-file limit, so the deploy fails outright.
+node_modules
+release
+dist
+dist-web
+electron
+*.exe

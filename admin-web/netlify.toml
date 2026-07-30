@@ -1,0 +1,11 @@
+[build]
+  base    = "admin-web"
+  command = "npm run build:web"
+  publish = "dist-web"
+
+# Single-page app: the dashboard has no server-side routes, so anything that is not
+# a real file has to fall through to index.html or a refresh on any path 404s.
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
