@@ -882,14 +882,12 @@ function PatientsTable() {
   const { filter, setFilter, page, setPage, query } = useListQuery<Person>(['patients'], '/admin/patients');
   const { data, isPending } = query;
 
-  // Deleting a patient takes their orders with them, so the confirm spells that out.
+  // Patient deletion is an archive: the dashboard hides the account while its
+  // orders and audit history remain linked in MongoDB.
   const remove = useMutation({
     mutationFn: async (id: string) => (await api.delete(`/admin/patients/${id}`)).data,
     onSuccess: (res: { orders: number }) => {
       client.invalidateQueries({ queryKey: ['patients'] });
-      client.invalidateQueries({ queryKey: ['orders'] });
-      client.invalidateQueries({ queryKey: ['stats'] });
-      client.invalidateQueries({ queryKey: ['overview'] });
       alert('success', t('userDeleted', res.orders));
     },
     onError: e => alert('error', errorMessage(e)),
@@ -926,7 +924,7 @@ function PatientsTable() {
                   className="danger"
                   disabled={remove.isPending}
                   onClick={() => confirm(t('confirmDeleteUser', person.name), () => remove.mutate(person._id))}>
-                  {t('delete')}
+                  {t('archive')}
                 </button>
               </td>
             </tr>
@@ -941,6 +939,109 @@ function PatientsTable() {
 /* ---------------------------------------------------------- test catalog --- */
 
 const blankTest = { name: '', category: '', amount: '' };
+const CATALOG_PAGE_SIZE = 10;
+
+type CatalogImportResult = { imported: number; created: number; updated: number };
+
+// Small RFC-4180-style parser: accepts Excel/Google Sheets CSV including quoted
+// commas and escaped quotes. Required columns are test_name/name, category and
+// amount/rate; headerless files use that same three-column order.
+function parseCatalogCsv(source: string) {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let value = '';
+  let quoted = false;
+  const text = source.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
+  for (let index = 0; index <= text.length; index += 1) {
+    const char = text[index] ?? '\n';
+    if (quoted) {
+      if (char === '"' && text[index + 1] === '"') { value += '"'; index += 1; }
+      else if (char === '"') quoted = false;
+      else value += char;
+    } else if (char === '"') quoted = true;
+    else if (char === ',') { row.push(value.trim()); value = ''; }
+    else if (char === '\n') {
+      row.push(value.trim()); value = '';
+      if (row.some(cell => cell !== '')) rows.push(row);
+      row = [];
+    } else value += char;
+  }
+  if (!rows.length) throw new Error('csv_empty');
+
+  const normal = (header: string) => header.toLowerCase().replace(/[^a-z]/g, '');
+  const headers = rows[0].map(normal);
+  const nameIndex = headers.findIndex(header => ['name', 'test', 'testname'].includes(header));
+  const categoryIndex = headers.findIndex(header => ['category', 'testcategory'].includes(header));
+  const amountIndex = headers.findIndex(header => ['amount', 'rate', 'price'].includes(header));
+  const hasHeader = nameIndex >= 0 && amountIndex >= 0;
+  const indexes = hasHeader
+    ? { name: nameIndex, category: categoryIndex, amount: amountIndex }
+    : { name: 0, category: 1, amount: 2 };
+
+  return rows.slice(hasHeader ? 1 : 0).map(cells => ({
+    name: cells[indexes.name]?.trim() || '',
+    category: indexes.category >= 0 ? cells[indexes.category]?.trim() || '' : '',
+    amount: Number(cells[indexes.amount]),
+  }));
+}
+
+function CatalogCsvImport({ invalidate }: { invalidate: () => void }) {
+  const { t } = useLang();
+  const { alert } = useAlert();
+  const [fileName, setFileName] = useState('');
+  const [rows, setRows] = useState<Array<{ name: string; category: string; amount: number }>>([]);
+  const upload = useMutation({
+    mutationFn: async () => (await api.post<CatalogImportResult>('/test-catalog/import', { rows })).data,
+    onSuccess: result => {
+      invalidate();
+      setRows([]);
+      setFileName('');
+      alert('success', t('csvImported', result.created, result.updated));
+    },
+    onError: error => alert('error', errorMessage(error)),
+  });
+
+  return (
+    <div className="catalog-import">
+      <div>
+        <strong>{t('uploadCsv')}</strong>
+        <p className="muted">{t('csvFormat')}</p>
+      </div>
+      <label className="file-button">
+        {fileName || t('chooseCsv')}
+        <input type="file" accept=".csv,text/csv" onChange={async event => {
+          const file = event.target.files?.[0];
+          if (!file) return;
+          try {
+            const parsed = parseCatalogCsv(await file.text());
+            if (!parsed.length || parsed.some(item => item.name.length < 2 || !Number.isFinite(item.amount) || item.amount < 0)) {
+              throw new Error('invalid');
+            }
+            setRows(parsed);
+            setFileName(file.name);
+          } catch {
+            setRows([]);
+            setFileName('');
+            alert('warning', t('csvInvalid'));
+          }
+          event.target.value = '';
+        }} />
+      </label>
+      <button type="button" className="ghost" onClick={() => {
+        const blob = new Blob(['test_name,category,amount\nCBC,Blood Test,300\n'], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'heritage-test-catalog-template.csv';
+        link.click();
+        URL.revokeObjectURL(url);
+      }}>{t('downloadTemplate')}</button>
+      <button className="primary" disabled={!rows.length || upload.isPending} onClick={() => upload.mutate()}>
+        {upload.isPending ? '…' : rows.length ? t('importCount', rows.length) : t('importCsv')}
+      </button>
+    </div>
+  );
+}
 
 function TestCatalogTable() {
   const { t } = useLang();
@@ -951,6 +1052,7 @@ function TestCatalogTable() {
   const [editing, setEditing] = useState<string | null>(null);
   const [edit, setEdit] = useState(blankTest);
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
 
   const { data, isPending } = useQuery({
     queryKey: ['catalog'],
@@ -988,6 +1090,9 @@ function TestCatalogTable() {
   const visibleTests = needle
     ? tests.filter(item => `${item.name} ${item.category || ''}`.toLocaleLowerCase().includes(needle))
     : tests;
+  const pages = Math.max(1, Math.ceil(visibleTests.length / CATALOG_PAGE_SIZE));
+  const safePage = Math.min(page, pages);
+  const pageTests = visibleTests.slice((safePage - 1) * CATALOG_PAGE_SIZE, safePage * CATALOG_PAGE_SIZE);
 
   const startEdit = (item: TestItem) => {
     setEditing(item._id);
@@ -996,9 +1101,11 @@ function TestCatalogTable() {
 
   return (
     <>
-      {!open ? (
-        <button className="primary add-btn" onClick={() => setOpen(true)}>{t('addTest')}</button>
-      ) : (
+      <div className="catalog-actions">
+        {!open && <button className="primary add-btn" onClick={() => setOpen(true)}>{t('addTest')}</button>}
+      </div>
+      <CatalogCsvImport invalidate={invalidate} />
+      {open && (
         <form className="card staff-form" onSubmit={e => {
           e.preventDefault();
           if (form.name.trim().length < 2) return alert('warning', t('testNameReq'));
@@ -1022,7 +1129,7 @@ function TestCatalogTable() {
         <div className="catalog-search">
           <input
             value={search}
-            onChange={event => setSearch(event.target.value)}
+            onChange={event => { setSearch(event.target.value); setPage(1); }}
             placeholder={t('searchTests')}
             aria-label={t('searchTests')}
           />
@@ -1042,7 +1149,7 @@ function TestCatalogTable() {
             {tests.length > 0 && visibleTests.length === 0 && (
               <tr><td colSpan={5}><Empty icon="lab" message={t('noMatchingTests')} /></td></tr>
             )}
-            {visibleTests.map(item => editing === item._id ? (
+            {pageTests.map(item => editing === item._id ? (
               <tr key={item._id}>
                 <td><input value={edit.name} onChange={e => setEdit(s => ({ ...s, name: e.target.value }))} /></td>
                 <td><input value={edit.category} onChange={e => setEdit(s => ({ ...s, category: e.target.value }))} /></td>
@@ -1075,6 +1182,7 @@ function TestCatalogTable() {
             ))}
           </tbody>
         </table>
+        <Pager page={safePage} pages={pages} total={visibleTests.length} setPage={setPage} />
       </div>
     </>
   );
@@ -1091,6 +1199,7 @@ function LabCatalog() {
   const [form, setForm] = useState(blankTest);
   const [editing, setEditing] = useState<string | null>(null);
   const [edit, setEdit] = useState(blankTest);
+  const [page, setPage] = useState(1);
   const query = useQuery({
     queryKey: ['catalog', 'lab'],
     queryFn: async () => (await api.get<LabCatalogItem[]>('/test-catalog')).data,
@@ -1136,13 +1245,18 @@ function LabCatalog() {
   const matching = (query.data ?? []).filter(test =>
     !needle || test.name.toLowerCase().includes(needle) || (test.category || '').toLowerCase().includes(needle),
   );
-  const visible = matching.slice(0, 100);
+  const pages = Math.max(1, Math.ceil(matching.length / CATALOG_PAGE_SIZE));
+  const safePage = Math.min(page, pages);
+  const visible = matching.slice((safePage - 1) * CATALOG_PAGE_SIZE, safePage * CATALOG_PAGE_SIZE);
+  const invalidate = () => client.invalidateQueries({ queryKey: ['catalog', 'lab'] });
 
   return (
     <>
-      {!open ? (
-        <button className="primary add-btn" onClick={() => setOpen(true)}>{t('addTest')}</button>
-      ) : (
+      <div className="catalog-actions">
+        {!open && <button className="primary add-btn" onClick={() => setOpen(true)}>{t('addTest')}</button>}
+      </div>
+      <CatalogCsvImport invalidate={invalidate} />
+      {open && (
         <form className="card staff-form" onSubmit={event => {
           event.preventDefault();
           if (form.name.trim().length < 2) return alert('warning', t('testNameReq'));
@@ -1166,7 +1280,7 @@ function LabCatalog() {
         <div className="catalog-search">
           <input
             value={search}
-            onChange={event => setSearch(event.target.value)}
+            onChange={event => { setSearch(event.target.value); setPage(1); }}
             placeholder={t('searchTests')}
           />
           <span className="muted">{t('testsFound', matching.length)}</span>
@@ -1202,9 +1316,7 @@ function LabCatalog() {
             ))}
           </tbody>
         </table>
-        {matching.length > visible.length && (
-          <p className="muted catalog-more">{t('refineTestSearch', visible.length, matching.length)}</p>
-        )}
+        <Pager page={safePage} pages={pages} total={matching.length} setPage={setPage} />
       </div>
     </>
   );

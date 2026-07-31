@@ -39,6 +39,15 @@ export default function ProfileScreen() {
   const show = (type: SweetAlertState['type'], message: string) =>
     setAlert({ visible: true, type, title: tr(type === 'error' ? 'error' : 'success', lang), message });
 
+  const confirmSignOut = () => setAlert({
+    visible: true,
+    type: 'warning',
+    title: tr('logout', lang),
+    message: tr('confirmLogout', lang),
+    acceptText: tr('logout', lang),
+    onAccept: () => { void signOut(); },
+  });
+
   // Seed the form from the server the first time the profile lands.
   useEffect(() => {
     if (!profile.data) return;
@@ -210,11 +219,12 @@ export default function ProfileScreen() {
         </View>
       </Card>
 
-      <Button secondary icon="logout" title={tr('back', lang)} onPress={signOut} />
+      <Button secondary icon="logout" title={tr('back', lang)} onPress={confirmSignOut} />
 
       <SweetAlert
         state={alert}
         confirmText={tr('ok', lang)}
+        cancelText={tr('cancel', lang)}
         onConfirm={() => setAlert(previous => ({ ...previous, visible: false }))}
       />
     </ScrollView>

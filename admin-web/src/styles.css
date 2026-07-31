@@ -646,6 +646,20 @@ tbody tr:hover td .muted { opacity: .85; }
 
 /* --- add-staff form -------------------------------------------------------- */
 .add-btn { margin-bottom: 18px; }
+.catalog-actions { display: flex; gap: 10px; align-items: center; }
+.catalog-import {
+  display: grid; grid-template-columns: minmax(240px, 1fr) minmax(180px, auto) auto auto;
+  align-items: center; gap: 14px; margin-bottom: 18px; padding: 16px 18px;
+  background: var(--white); border: 1px solid var(--border-soft); border-radius: 14px;
+}
+.catalog-import p { margin: 4px 0 0; }
+.file-button {
+  min-height: 42px; max-width: 300px; padding: 10px 13px; display: flex;
+  align-items: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  border: 1px solid var(--border); border-radius: 9px; background: var(--paper);
+  color: var(--maroon); font-weight: 600; cursor: pointer;
+}
+.file-button input { display: none; }
 .staff-form h2 { font-size: 16px; color: var(--maroon); margin-bottom: 16px; }
 .staff-grid {
   display: grid;
@@ -702,6 +716,11 @@ tbody tr:hover td .muted { opacity: .85; }
   border-bottom: 1px solid var(--border-soft);
 }
 .catalog-more { margin: 0; padding: 12px 18px; border-top: 1px solid var(--border-soft); }
+
+@media (max-width: 760px) {
+  .catalog-import { grid-template-columns: 1fr; }
+  .file-button { max-width: none; }
+}
 
 /* --- password field with a show/hide eye ------------------------------------
    The eye is an ICON, not a button-looking thing. It sat inside .login, where

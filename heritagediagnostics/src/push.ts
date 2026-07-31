@@ -24,7 +24,10 @@ import { api } from './client';
 // default_notification_channel_id. If any of the three drift apart, Android silently
 // files the notification under a low-importance default: it is "delivered" and mute,
 // which is the worst kind of bug because nothing anywhere reports an error.
-export const CHANNEL_ID = 'heritage-alerts';
+// A channel's sound/importance cannot be changed after Android creates it. Some
+// existing installs have the original channel cached as silent, so v2 deliberately
+// creates a fresh channel and restores the expected message tone on upgrade.
+export const CHANNEL_ID = 'heritage-alerts-v2';
 
 /** Payload the server attaches (push.js `data`), so a tap can open the right order. */
 export type PushData = { type?: string; orderId?: string; order?: string };
@@ -48,7 +51,7 @@ export async function ensureChannel() {
   if (Platform.OS !== 'android') return;
   await notifee.createChannel({
     id: CHANNEL_ID,
-    name: 'Orders & reports',
+    name: 'Orders & reports (sound)',
     description: 'New prescriptions, pickups, and reports',
     importance: AndroidImportance.HIGH,
     visibility: AndroidVisibility.PRIVATE,   // medical data — no preview on a lock screen
@@ -165,6 +168,7 @@ export function onForegroundMessage() {
       android: {
         channelId: CHANNEL_ID,
         importance: AndroidImportance.HIGH,
+        sound: 'default',
         smallIcon: 'ic_notification',
         color: '#5E111B',
         pressAction: { id: 'default', launchActivity: 'default' },

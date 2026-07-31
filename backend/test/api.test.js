@@ -13,7 +13,7 @@ process.env.DEV_OTP = '1234';
 process.env.NODE_ENV = 'test';
 
 const app = require('../src/app');
-const { Patient, Staff, Order } = require('../src/models');
+const { Patient, ArchivedPatient, Staff, Order, TestCatalog } = require('../src/models');
 const { STATUS } = require('../src/status');
 
 let mongod;
@@ -505,6 +505,45 @@ test('only an admin can create staff — nobody can make themselves a PRO', asyn
   assert.equal(locked.status, 401);
 });
 
+test('admin archives a patient without deleting their document or linked orders', async () => {
+  const patient = await loginPatient('9500000044');
+  const created = await api('POST', '/api/orders', {
+    token: patient, form: filePart('prescription', 'archive.jpg', 'image/jpeg', 'bytes'),
+  });
+  assert.equal(created.status, 201);
+
+  const patientId = created.body.patient._id;
+  const orderId = created.body._id;
+  const admin = await staffToken('admin', 'admin123');
+  const archived = await api('DELETE', `/api/admin/patients/${patientId}`, { token: admin });
+  assert.equal(archived.status, 200);
+  assert.equal(archived.body.archived, true);
+  assert.equal(archived.body.orders, 1);
+
+  const storedPatient = await Patient.findById(patientId);
+  assert.ok(storedPatient, 'soft-deleted patient remains in MongoDB');
+  assert.ok(storedPatient.deletedAt, 'archive timestamp is stored');
+  assert.equal(storedPatient.password, undefined, 'live patient row keeps no login credential');
+  assert.ok(await Order.findById(orderId), 'linked order remains in MongoDB');
+
+  const archive = await ArchivedPatient.findOne({ originalPatientId: patientId });
+  assert.ok(archive, 'patient snapshot exists in patient_archives collection');
+  assert.equal(archive.phone, '9500000044');
+  assert.equal(archive.orderCount, 1);
+  assert.deepEqual(archive.orderIds.map(String), [orderId]);
+  assert.equal(archive.password, undefined, 'archive never stores authentication secrets');
+
+  const list = await api('GET', '/api/admin/patients?page=1', { token: admin });
+  assert.equal(list.body.items.some(item => item._id === patientId), false, 'archived user is hidden from frontend API');
+
+  const oldSession = await api('GET', '/api/orders/my', { token: patient });
+  assert.equal(oldSession.status, 401, 'token issued before archive stops working');
+  const login = await api('POST', '/api/auth/login', {
+    body: { phone: '9500000044', password: PASSWORD },
+  });
+  assert.equal(login.status, 401, 'archived patient cannot log in');
+});
+
 test('LAB can add, search and edit test names and rates without disable access', async () => {
   const admin = await staffToken('admin', 'admin123');
   const lab = await staffToken('lab', 'lab123');
@@ -540,6 +579,43 @@ test('LAB can add, search and edit test names and rates without disable access',
   assert.equal(edited.body.category, 'Haematology');
   assert.equal(edited.body.amount, 425);
   assert.equal(edited.body.isActive, undefined, 'LAB edit response keeps management fields private');
+
+  const imported = await api('POST', '/api/test-catalog/import', {
+    token: lab,
+    body: { rows: [
+      { name: 'CBC with Differential', category: 'Haematology', amount: 450 },
+      { name: 'Thyroid Profile', category: 'Hormone', amount: 700 },
+    ] },
+  });
+  assert.equal(imported.status, 200);
+  assert.deepEqual(imported.body, { imported: 2, created: 1, updated: 1 });
+  assert.equal((await TestCatalog.findOne({ name: 'CBC with Differential' })).amount, 450);
+  assert.equal((await TestCatalog.findOne({ name: 'Thyroid Profile' })).amount, 700);
+
+  // Orders keep both the catalog ObjectIds and the frozen display/rate snapshot.
+  const patient = await loginPatient('9500000055');
+  const order = await api('POST', '/api/orders', {
+    token: patient, form: filePart('prescription', 'catalog.jpg', 'image/jpeg', 'bytes'),
+  });
+  const pro = await staffToken('pro', 'pro123');
+  await api('PATCH', `/api/orders/${order.body._id}/pro-call`, { token: pro });
+  const confirmed = await api('PATCH', `/api/orders/${order.body._id}/pro-confirm`, {
+    token: pro, body: { testIds: [created.body._id, addedByLab.body._id] },
+  });
+  assert.equal(confirmed.status, 200);
+  assert.deepEqual(
+    confirmed.body.testCatalogItems.map(String).sort(),
+    [created.body._id, addedByLab.body._id].sort(),
+    'catalog ObjectIds are persisted on the order',
+  );
+  assert.ok(confirmed.body.tests.includes('CBC with Differential'), 'name snapshot remains readable');
+  assert.equal(confirmed.body.testItems.find(item => item.name === 'CBC with Differential').amount, 450);
+
+  const invalidCsv = await api('POST', '/api/test-catalog/import', {
+    token: lab, body: { rows: [{ name: '', category: 'Broken', amount: -1 }] },
+  });
+  assert.equal(invalidCsv.status, 400);
+  assert.equal(invalidCsv.body.code, 'csv_invalid_row');
 
   const forbiddenAdminRoute = await api('PATCH', `/api/admin/test-catalog/${created.body._id}`, {
     token: lab, body: { isActive: false },

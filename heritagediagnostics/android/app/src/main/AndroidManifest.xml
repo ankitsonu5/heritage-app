@@ -49,7 +49,7 @@
            to guess. This says ours wins. -->
       <meta-data
         android:name="com.google.firebase.messaging.default_notification_channel_id"
-        android:value="heritage-alerts"
+        android:value="heritage-alerts-v2"
         tools:replace="android:value" />
       <!-- A notification icon must be a white-on-transparent silhouette. Handing
            Android the full-colour launcher icon here is why so many apps show a plain

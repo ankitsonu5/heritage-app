@@ -195,6 +195,12 @@ patient data in demo accounts, screenshots, fixtures, logs, or repository files.
 Review authentication, file access, backups, retention, and applicable privacy
 requirements before a production launch.
 
+Play Store compliance drafts:
+
+- [Privacy Policy](docs/PRIVACY_POLICY.md)
+- [Google Play Data Safety entry guide](docs/PLAY_STORE_DATA_SAFETY.md)
+- [Account deletion request text](docs/ACCOUNT_DELETION.md)
+
 ## License
 
 No public license has been specified. All rights are reserved unless the project

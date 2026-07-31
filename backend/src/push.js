@@ -18,7 +18,10 @@ const { getMessaging } = require('firebase-admin/messaging');
 // message. The app creates a channel with this exact id at startup; if the two ever
 // disagree, Android silently drops the notification into the low-priority tray and
 // the phone never makes a sound.
-const CHANNEL_ID = 'heritage-alerts';
+// v2 is intentional: Android never lets an app raise the sound/importance of an
+// already-created channel. A new id restores the default message tone for users
+// whose original channel was created or cached as silent.
+const CHANNEL_ID = 'heritage-alerts-v2';
 
 let app = null;
 let initialised = false;

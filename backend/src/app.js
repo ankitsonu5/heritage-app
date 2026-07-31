@@ -6,7 +6,7 @@ const cors = require('cors');
 const multer = require('multer');
 const bcrypt = require('bcryptjs');
 
-const { Patient, Staff, Order, OrderStatusHistory, Notification, TestCatalog } = require('./models');
+const { Patient, ArchivedPatient, Staff, Order, OrderStatusHistory, Notification, TestCatalog } = require('./models');
 const { sign, auth, allow, hashOtp, compareOtp } = require('./auth');
 const { STATUS, STEPS, QUEUES, stepIndex, ALL_STATUSES } = require('./status');
 const { moveTo, populateOrder } = require('./lifecycle');
@@ -201,7 +201,7 @@ app.post('/api/auth/login', wrap(async (req, res) => {
 
   if (!isValidPhone(phone) || !password) throw wrong();
 
-  const patient = await Patient.findOne({ phone });
+  const patient = await Patient.findOne({ phone, deletedAt: null });
   if (!patient?.password) throw wrong();
 
   if (patient.lockedUntil && patient.lockedUntil > new Date()) {
@@ -235,7 +235,7 @@ app.post('/api/auth/send-otp', wrap(async (req, res) => {
   const phone = String(req.body.phone || '').replace(/\D/g, '');
   if (!isValidPhone(phone)) throw fail(400, 'invalid_phone', INVALID_PHONE_MSG);
 
-  const patient = await Patient.findOne({ phone });
+  const patient = await Patient.findOne({ phone, deletedAt: null });
   if (!patient || !patient.name || patient.name === 'ग्राहक' || !patient.address) {
     throw fail(404, 'not_registered', 'यह नंबर रजिस्टर्ड नहीं है। पहले रजिस्टर करें।');
   }
@@ -246,7 +246,7 @@ app.post('/api/auth/send-otp', wrap(async (req, res) => {
 
 app.post('/api/auth/verify-otp', wrap(async (req, res) => {
   const phone = String(req.body.phone || '').replace(/\D/g, '');
-  const patient = await Patient.findOne({ phone });
+  const patient = await Patient.findOne({ phone, deletedAt: null });
   if (!patient || !patient.otpHash || !patient.otpExpiry || patient.otpExpiry < new Date()) {
     throw fail(400, 'invalid_otp', 'OTP गलत या पुराना है।');
   }
@@ -537,12 +537,14 @@ app.patch('/api/orders/:id/pro-confirm', ...action(['pro', 'admin'], async (req,
   // itself, so the amount can never be typed or tampered with. `otherTests` is the
   // manual fallback for a test that isn't in the catalog.
   let testItems = [];
+  let testCatalogItemIds = [];
   let legacyAmount = null;
 
   if (Array.isArray(req.body.testIds) && req.body.testIds.length) {
     const ids = req.body.testIds.filter(id => /^[a-f0-9]{24}$/i.test(String(id)));
     const found = await TestCatalog.find({ _id: { $in: ids }, isActive: true });
     testItems = found.map(c => ({ name: c.name, amount: c.amount }));
+    testCatalogItemIds = found.map(c => c._id);
   }
   if (Array.isArray(req.body.otherTests)) {
     for (const o of req.body.otherTests) {
@@ -576,6 +578,7 @@ app.patch('/api/orders/:id/pro-confirm', ...action(['pro', 'admin'], async (req,
     mutate: o => {
       o.tests = names;
       o.testItems = testItems.map(t => ({ name: t.name, amount: t.amount || 0 }));
+      o.testCatalogItems = testCatalogItemIds;
       o.amount = amount;
       o.paymentMode = req.body.paymentMode === 'online' ? 'online' : 'cash';
       o.proConfirmed = true;
@@ -1035,26 +1038,51 @@ app.delete('/api/admin/staff/:id', auth, allow('admin'), wrap(async (req, res) =
 }));
 
 app.get('/api/admin/patients', auth, allow('admin'), wrap(async (req, res) =>
-  res.json(await paginatedList(Patient, {}, req))));
+  res.json(await paginatedList(Patient, { deletedAt: null }, req))));
 
-// Remove a patient for good, along with everything that hangs off them — their
-// orders, those orders' history, and their notifications. Nothing is left behind
-// pointing at a patient that no longer exists. The dashboard warns how many orders
-// go with them before this is called.
+// Archive instead of hard-delete. Orders, reports, history and the Patient ObjectId
+// remain intact for audit/medical records, while login and frontend lists exclude
+// the account immediately.
 app.delete('/api/admin/patients/:id', auth, allow('admin'), wrap(async (req, res) => {
-  const patient = await Patient.findById(req.params.id);
+  const patient = await Patient.findOne({ _id: req.params.id, deletedAt: null });
   if (!patient) throw fail(404, 'not_found', 'मरीज़ नहीं मिला।');
 
-  const orders = await Order.find({ patient: patient._id }).select('_id');
-  const orderIds = orders.map(o => o._id);
-  await Promise.all([
-    OrderStatusHistory.deleteMany({ order: { $in: orderIds } }),
-    Notification.deleteMany({ patient: patient._id }),
-    Order.deleteMany({ patient: patient._id }),
-  ]);
-  await Patient.deleteOne({ _id: patient._id });
+  const orders = await Order.countDocuments({ patient: patient._id });
+  const orderIds = await Order.find({ patient: patient._id }).distinct('_id');
+  await ArchivedPatient.findOneAndUpdate(
+    { originalPatientId: patient._id },
+    {
+      $set: {
+        phone: patient.phone,
+        name: patient.name,
+        age: patient.age,
+        village: patient.village,
+        address: patient.address,
+        voiceGuidance: patient.voiceGuidance,
+        originalCreatedAt: patient.createdAt,
+        originalUpdatedAt: patient.updatedAt,
+        orderIds,
+        orderCount: orders,
+        archivedAt: new Date(),
+        archivedBy: req.user.id,
+      },
+    },
+    { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true },
+  );
 
-  res.json({ deleted: true, orders: orderIds.length });
+  patient.deletedAt = new Date();
+  // Defence in depth: even an older login implementation cannot authenticate an
+  // archived patient because no password or OTP credential remains on the live row.
+  patient.password = undefined;
+  patient.pushToken = undefined;
+  patient.otpHash = undefined;
+  patient.otpExpiry = undefined;
+  patient.otpAttempts = 0;
+  patient.loginAttempts = 0;
+  patient.lockedUntil = undefined;
+  await patient.save();
+
+  res.json({ deleted: true, archived: true, archiveCollection: 'patient_archives', orders });
 }));
 
 /* -------------------------------------------------------- test catalog ---- */
@@ -1097,6 +1125,57 @@ const createCatalogTest = async (req, res) => {
 // LAB may maintain names/categories/rates, but disabling remains an Admin action.
 app.post('/api/test-catalog', auth, allow('lab'), wrap(createCatalogTest));
 app.post('/api/admin/test-catalog', auth, allow('admin'), wrap(createCatalogTest));
+
+// Bulk CSV import. The browser parses the selected CSV and sends normal JSON rows,
+// keeping file handling simple and safe. Existing names are updated (case
+// insensitive); new names are created. Disabled tests stay disabled so an import
+// cannot silently undo an admin decision.
+app.post('/api/test-catalog/import', auth, allow('lab', 'admin'), wrap(async (req, res) => {
+  if (!Array.isArray(req.body.rows) || req.body.rows.length === 0) {
+    throw fail(400, 'csv_empty', 'CSV में कोई जांच नहीं मिली।');
+  }
+  if (req.body.rows.length > 500) {
+    throw fail(400, 'csv_too_many', 'एक बार में अधिकतम 500 जांच अपलोड करें।');
+  }
+
+  const clean = [];
+  const seen = new Set();
+  for (const [index, raw] of req.body.rows.entries()) {
+    const name = String(raw?.name || '').trim();
+    const category = String(raw?.category || '').trim();
+    const amount = Number(raw?.amount);
+    if (name.length < 2 || !Number.isFinite(amount) || amount < 0) {
+      throw fail(400, 'csv_invalid_row', `CSV row ${index + 2}: जांच का नाम और सही rate जरूरी है।`);
+    }
+    const key = name.toLocaleLowerCase('en-IN');
+    // Last duplicate row wins, matching what users see at the bottom of a sheet.
+    if (seen.has(key)) {
+      const previous = clean.findIndex(item => item.key === key);
+      clean.splice(previous, 1);
+    }
+    seen.add(key);
+    clean.push({ key, name, category, amount });
+  }
+
+  let created = 0;
+  let updated = 0;
+  for (const row of clean) {
+    const escapedName = row.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const existing = await TestCatalog.findOne({ name: { $regex: `^${escapedName}$`, $options: 'i' } });
+    if (existing) {
+      existing.name = row.name;
+      existing.category = row.category;
+      existing.amount = row.amount;
+      await existing.save();
+      updated += 1;
+    } else {
+      await TestCatalog.create({ name: row.name, category: row.category, amount: row.amount });
+      created += 1;
+    }
+  }
+
+  res.json({ imported: clean.length, created, updated });
+}));
 
 const updateCatalogTest = allowActive => async (req, res) => {
   const test = await TestCatalog.findById(req.params.id);

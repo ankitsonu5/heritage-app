@@ -17,10 +17,18 @@ const secret = () => {
 // client.ts), so together an open session survives until the user taps Log out.
 const sign = payload => jwt.sign(payload, secret(), { expiresIn: process.env.JWT_EXPIRES_IN || '90d' });
 
-const auth = (req, res, next) => {
+const auth = async (req, res, next) => {
   try {
     const token = (req.headers.authorization || '').replace(/^Bearer /, '');
     req.user = jwt.verify(token, secret());
+    // A JWT issued before an account was disabled/archived must stop working too.
+    // Without this check, hiding the row only affects the UI while the old phone
+    // can continue using every authenticated endpoint for up to 90 days.
+    const { Patient, Staff } = require('./models');
+    const account = req.user.role === 'user'
+      ? await Patient.exists({ _id: req.user.id, deletedAt: null })
+      : await Staff.exists({ _id: req.user.id, active: true });
+    if (!account) throw new Error('inactive_account');
     next();
   } catch {
     res.status(401).json({ code: 'unauthorized', message: 'कृपया दोबारा लॉगिन करें।' });

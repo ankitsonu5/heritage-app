@@ -158,6 +158,7 @@ const copy: Record<string, [string, string]> = {
   fromGallery: ['गैलरी से चुनें', 'Choose from gallery'],
   fromGalleryHint: ['पहले से खींची हुई फोटो', 'A photo you already have'],
   cancel: ['रद्द करें', 'Cancel'],
+  confirmLogout: ['क्या आप लॉग आउट करना चाहते हैं?', 'Are you sure you want to log out?'],
   chooseAgent: ['एजेंट चुनें', 'Choose an agent'],
   agentBusy: ['पिकअप पर', 'On a pickup'],
   agentFree: ['खाली', 'Free'],

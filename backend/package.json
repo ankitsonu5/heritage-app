@@ -11,6 +11,8 @@
     "start": "node src/server.js",
     "seed": "node seed.js",
     "sync-tests": "node sync-tests.js",
+    "migrate:test-refs": "node migrate-order-test-refs.js",
+    "migrate:patient-archives": "node migrate-patient-archives.js",
     "test": "node --test"
   },
   "dependencies": {

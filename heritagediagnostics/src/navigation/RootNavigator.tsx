@@ -4,7 +4,7 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useQueryClient } from '@tanstack/react-query';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -16,6 +16,7 @@ import { useSession } from '../store/session';
 import { Header, styles } from '../theme';
 import { tr } from '../translations';
 import { speak } from '../speech';
+import { SweetAlert, SweetAlertState } from '../SweetAlert';
 
 import NotificationBell from '../components/NotificationBell';
 import LoginScreen from '../screens/LoginScreen';
@@ -34,6 +35,18 @@ const RootStack = createNativeStackNavigator();
 // The bell rides in every role's header — patient, PRO, agent and lab alike.
 function AppHeader({ title, withVoice }: { title: string; withVoice?: boolean }) {
   const { lang, setLang, signOut, voiceGuidance, setVoiceGuidance } = useSession();
+  const [logoutAlert, setLogoutAlert] = useState<SweetAlertState>({
+    visible: false, type: 'warning', title: '', message: '',
+  });
+
+  const confirmSignOut = () => setLogoutAlert({
+    visible: true,
+    type: 'warning',
+    title: tr('logout', lang),
+    message: tr('confirmLogout', lang),
+    acceptText: tr('logout', lang),
+    onAccept: () => { void signOut(); },
+  });
 
   // One tap flips voice guidance. Turning it ON says so out loud, which is the
   // only confirmation that matters to someone who is using the app by ear.
@@ -43,17 +56,23 @@ function AppHeader({ title, withVoice }: { title: string; withVoice?: boolean })
     if (next) speak(tr('voiceOn', lang), lang);
   };
 
-  return (
+  return <>
     <Header
       title={title}
       lang={lang}
       setLang={setLang}
-      onBack={signOut}
+      onBack={confirmSignOut}
       voiceOn={voiceGuidance}
       onToggleVoice={withVoice ? toggleVoice : undefined}
       actions={<NotificationBell />}
     />
-  );
+    <SweetAlert
+      state={logoutAlert}
+      confirmText={tr('ok', lang)}
+      cancelText={tr('cancel', lang)}
+      onConfirm={() => setLogoutAlert(previous => ({ ...previous, visible: false }))}
+    />
+  </>;
 }
 
 function PatientStack() {

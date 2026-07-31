@@ -21,7 +21,29 @@ const patientSchema = new mongoose.Schema({
 
   voiceGuidance: { type: Boolean, default: true },
   pushToken: String,
+  // Admin "delete" is an archive. Keeping the document preserves every order's
+  // patient ObjectId and audit trail; all user-facing queries exclude this marker.
+  deletedAt: { type: Date, default: null, index: true },
 }, { timestamps: true });
+
+// Human-readable archive kept separately from the live patient collection. It
+// intentionally excludes password/OTP/push credentials. originalPatientId stays
+// stable so an administrator can correlate the archive with retained orders.
+const archivedPatientSchema = new mongoose.Schema({
+  originalPatientId: { type: mongoose.Schema.Types.ObjectId, required: true, unique: true, index: true },
+  phone: { type: String, index: true },
+  name: String,
+  age: Number,
+  village: String,
+  address: String,
+  voiceGuidance: Boolean,
+  originalCreatedAt: Date,
+  originalUpdatedAt: Date,
+  orderIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Order' }],
+  orderCount: { type: Number, default: 0 },
+  archivedAt: { type: Date, required: true, default: Date.now },
+  archivedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff' },
+}, { collection: 'patient_archives', timestamps: true });
 
 const staffSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -49,6 +71,9 @@ const orderSchema = new mongoose.Schema({
   // rewrites a past order's amount.
   tests: [String],
   testItems: [{ _id: false, name: String, amount: Number }],
+  // Stable catalog relations alongside the immutable name/rate snapshot above.
+  // Manual/legacy tests may have no matching catalog ObjectId, which is valid.
+  testCatalogItems: [{ type: mongoose.Schema.Types.ObjectId, ref: 'TestCatalog' }],
   amount: { type: Number, default: 0 },
   paymentMode: { type: String, enum: ['cash', 'online'], default: 'cash' },
   paymentCollected: { type: Boolean, default: false },
@@ -133,6 +158,7 @@ const testCatalogSchema = new mongoose.Schema({
 
 module.exports = {
   Patient: mongoose.model('Patient', patientSchema),
+  ArchivedPatient: mongoose.model('ArchivedPatient', archivedPatientSchema),
   Staff: mongoose.model('Staff', staffSchema),
   Order: mongoose.model('Order', orderSchema),
   OrderStatusHistory: mongoose.model('OrderStatusHistory', statusHistorySchema),
