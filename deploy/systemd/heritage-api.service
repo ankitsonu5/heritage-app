@@ -1,0 +1,36 @@
+# Backend को service की तरह चलाता है।
+#
+# `npm run start` SSH session के साथ ही मर जाता है — terminal बंद, API बंद। यह unit
+# उसे boot पर चालू करती है और crash होने पर वापस उठा देती है।
+#
+# Install:
+#   sudo cp heritage-api.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now heritage-api
+#   sudo systemctl status heritage-api
+#   sudo journalctl -u heritage-api -f      # logs
+
+[Unit]
+Description=Heritage Diagnostics API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/var/www/heritage-app/backend
+ExecStart=/usr/bin/node src/server.js
+Restart=always
+RestartSec=5
+
+# .env वहीं से पढ़ी जाती है जहाँ से आज पढ़ी जा रही है — dotenv खुद उठाता है, इसलिए
+# यहाँ EnvironmentFile की ज़रूरत नहीं। ध्यान रहे: dotenv पहले से set environment
+# variable को override नहीं करता, इसलिए यहाँ Environment= लिखकर वही key दोबारा मत
+# दें, वरना .env का बदलाव बेअसर दिखेगा।
+Environment=NODE_ENV=production
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=heritage-api
+
+[Install]
+WantedBy=multi-user.target

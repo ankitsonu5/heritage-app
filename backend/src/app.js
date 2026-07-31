@@ -33,7 +33,11 @@ const upload = multer({
   },
 });
 
-app.use(cors({ origin: process.env.ALLOWED_ORIGINS?.split(',') || '*' }));
+// ALLOWED_ORIGINS is comma-separated and gets written with a space after the comma
+// often enough that it has to be tolerated: ' https://site' matches nothing, and the
+// browser then reports a CORS failure that reads like a server bug rather than a typo.
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()).filter(Boolean);
+app.use(cors({ origin: allowedOrigins?.length ? allowedOrigins : '*' }));
 app.use(express.json());
 app.use('/uploads', express.static(uploadRoot));
 

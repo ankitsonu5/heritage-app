@@ -16,7 +16,7 @@ import { Platform } from 'react-native';
 //
 // The deployed backend. The APK talks to this — a phone cannot reach "localhost",
 // and a LAN address only works on the same Wi-Fi as the laptop.
-export const PRODUCTION_API_URL = 'https://heritage-hospital-1.onrender.com';
+export const PRODUCTION_API_URL = 'https://dapp.heritageimshospital.com';
 
 export const API_BASE_URL = __DEV__
   // Debug builds: the Android emulator reaches the host through 10.0.2.2.

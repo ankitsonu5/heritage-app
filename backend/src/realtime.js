@@ -18,8 +18,12 @@ const patientRoom = patientId => `patient:${patientId}`;
 const personalRoom = id => `user:${id}`;
 
 function attach(httpServer) {
+  // Same trimming as app.js — the socket runs its own CORS check, and a stray space
+  // after a comma breaks real-time while the REST calls keep working.
+  const origins = process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()).filter(Boolean);
+
   io = new Server(httpServer, {
-    cors: { origin: process.env.ALLOWED_ORIGINS?.split(',') || '*' },
+    cors: { origin: origins?.length ? origins : '*' },
   });
 
   // The socket carries the same JWT the REST calls do. Without this, anyone who

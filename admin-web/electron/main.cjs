@@ -13,7 +13,7 @@ const path = require('path');
 // would be empty and the app would silently talk to nothing.
 //
 // A developer can still override it (API_URL=http://localhost:5000 npm run electron).
-const API_URL = process.env.API_URL || 'https://heritage-hospital-1.onrender.com';
+const API_URL = process.env.API_URL || 'https://dapp.heritageimshospital.com';
 
 const isDev = !app.isPackaged;
 
