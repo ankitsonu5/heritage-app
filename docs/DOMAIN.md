@@ -37,9 +37,10 @@ cd /var/www/heritage-app/backend
 nano .env
 ```
 
-तीन बदलाव ज़रूरी हैं:
+चार बदलाव ज़रूरी हैं:
 
 ```
+PORT=5001                        # 5000 पर HMS-MONOREPO पहले से बैठा है
 ALLOWED_ORIGINS=https://dapp.heritageimshospital.com
 JWT_SECRET=<नया random>          # node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 # DEV_OTP वाली line पूरी हटा दें
@@ -52,17 +53,24 @@ JWT_SECRET=<नया random>          # node -e "console.log(require('crypto').
 
 ## 3. Backend को service बनाएँ
 
-`npm run start` SSH बंद होते ही मर जाता है। इसे systemd के हवाले करें:
+`npm run start` SSH बंद होते ही मर जाता है। इस server पर pm2 पहले से है (HMS-MONOREPO
+उसी पर चलता है), इसलिए यही app भी उसी के हवाले:
 
 ```bash
-sudo cp /var/www/heritage-app/deploy/systemd/heritage-api.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now heritage-api
-sudo systemctl status heritage-api          # active (running) दिखना चाहिए
-curl -s localhost:5000/api/health           # {"ok":true,...}
+cd /var/www/heritage-app/backend
+NODE_ENV=production pm2 start src/server.js --name heritage-api --update-env
+pm2 save
+pm2 startup systemd        # जो command छापे उसे चलाएँ — boot पर auto-start
+curl -s localhost:5001/api/health           # {"ok":true,...}
 ```
 
-Logs: `sudo journalctl -u heritage-api -f`
+`NODE_ENV=production` छूटा तो backend हर OTP को API response में वापस भेजता है
+(`src/app.js` का `issueOtp`) — testing के लिए बना रास्ता, production में खुला दरवाज़ा।
+
+Logs: `pm2 logs heritage-api`
+
+systemd पसंद हो तो `deploy/systemd/heritage-api.service` उसी काम का तैयार unit है —
+पर दोनों एक साथ मत चलाइए, दूसरा `EADDRINUSE` देकर मर जाएगा।
 
 ## 4. Dashboard build करें
 
@@ -102,11 +110,12 @@ Firewall खुला हो:
 
 ```bash
 sudo ufw allow 'Nginx Full'
-sudo ufw deny 5000                           # backend सिर्फ़ nginx के ज़रिये मिले
+sudo ufw deny 5001                           # backend सिर्फ़ nginx के ज़रिये मिले
 ```
 
-Port 5000 अभी `0.0.0.0` पर सुनता है, यानी बिना इस rule के लोग सीधे
-`http://IP:5000` से API छू सकते हैं — HTTPS को दरकिनार करके।
+Backend `0.0.0.0` पर सुनता है, यानी बिना इस rule के लोग सीधे `http://IP:5001` से API
+छू सकते हैं — HTTPS को दरकिनार करके। 5000 को मत छेड़िए: वह इस server पर चल रहे दूसरे
+project (HMS-MONOREPO) का है।
 
 ## 6. जाँच
 
@@ -132,7 +141,7 @@ nginx के `/socket.io/` block के Upgrade headers देखें।
 
 ```bash
 cd /var/www/heritage-app && git pull
-cd backend && npm install && sudo systemctl restart heritage-api
+cd backend && npm install && pm2 restart heritage-api
 cd ../admin-web && npm install && npm run build:web
 ```
 
