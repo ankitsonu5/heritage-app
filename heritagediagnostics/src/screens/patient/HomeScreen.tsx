@@ -2,7 +2,7 @@ import { useIsFocused, useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { Linking, ScrollView, Text, View } from 'react-native';
 
-import { useLatestOrder, useMyOrders } from '../../api/hooks';
+import { useLatestOrder, useMyOrders, useProContact } from '../../api/hooks';
 import Icon from '../../components/Icon';
 import { useTabs } from '../../navigation/PatientTabs';
 import { STATUS } from '../../constants/status';
@@ -10,8 +10,6 @@ import { useSession } from '../../store/session';
 import { Button, C, Card, Chip, styles } from '../../theme';
 import { tr } from '../../translations';
 import { speak } from '../../speech';
-
-import { PRO_DESK_PHONE } from '../../config';
 
 export default function HomeScreen() {
   const { lang, name, voiceGuidance } = useSession();
@@ -21,6 +19,8 @@ export default function HomeScreen() {
 
   const latest = useLatestOrder(focused);
   const orders = useMyOrders();
+  const proContact = useProContact(focused);
+  const proPhone = proContact.data?.phone;
 
   const active = latest.data && latest.data.order.status !== STATUS.REPORT_READY
     && latest.data.order.status !== STATUS.CANCELLED
@@ -98,12 +98,14 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <Button
-        secondary
-        icon="phone"
-        title={tr('callPro', lang)}
-        onPress={() => Linking.openURL(`tel:${PRO_DESK_PHONE}`)}
-      />
+      {proPhone ? (
+        <Button
+          secondary
+          icon="phone"
+          title={tr('callPro', lang)}
+          onPress={() => Linking.openURL(`tel:+91${proPhone}`)}
+        />
+      ) : null}
     </ScrollView>
   );
 }

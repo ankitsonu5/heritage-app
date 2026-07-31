@@ -3,7 +3,7 @@
 // Everything else mirrors config.ts — see that file for what these mean.
 export const API_BASE_URL = '';
 
-export const PRO_DESK_PHONE = '+919999999999';
+export const PRO_DESK_PHONE = '';
 
 export const POLL_INTERVAL_MS = 20_000;
 

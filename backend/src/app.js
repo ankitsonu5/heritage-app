@@ -349,6 +349,26 @@ app.get('/api/orders/my/latest', auth, allow('user'), wrap(async (req, res) => {
   res.json({ order, stepIndex: stepIndex(order.status), steps: STEPS, history });
 }));
 
+// Patient-facing call contact. This comes from the admin-created PRO account, so
+// changing or disabling a PRO updates the app without shipping another APK.
+// Prefer the PRO already handling the patient's latest order; otherwise use the
+// most recently added active PRO desk account.
+app.get('/api/staff/pro-contact', auth, allow('user'), wrap(async (req, res) => {
+  const latest = await Order.findOne({ patient: req.user.id }).sort('-createdAt').select('pro');
+  let pro = latest?.pro
+    ? await Staff.findOne({ _id: latest.pro, role: 'pro', active: true, phone: PHONE_RE })
+      .select('name phone')
+    : null;
+
+  if (!pro) {
+    pro = await Staff.findOne({ role: 'pro', active: true, phone: PHONE_RE })
+      .select('name phone')
+      .sort('-createdAt');
+  }
+
+  res.json(pro ? { id: pro.id, name: pro.name, phone: pro.phone } : null);
+}));
+
 app.get('/api/orders/:id/status-history', auth, wrap(async (req, res) => {
   const order = await Order.findById(req.params.id);
   if (!order) throw fail(404, 'not_found', 'ऑर्डर नहीं मिला।');

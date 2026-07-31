@@ -23,8 +23,9 @@ export const API_BASE_URL = __DEV__
   ? (Platform.OS === 'android' ? 'http://10.0.2.2:5000' : 'http://localhost:5000')
   : PRODUCTION_API_URL;
 
-// The number the patient's "Call PRO" button dials.
-export const PRO_DESK_PHONE = '+919999999999';
+// The number the patient's "Call PRO" button dials. Leave empty until the real
+// clinic/PRO number is configured, so the app never dials a placeholder.
+export const PRO_DESK_PHONE = '';
 
 // How often focused screens re-fetch. The upgrade path to true real-time is to
 // swap this polling for websocket-driven cache invalidation.

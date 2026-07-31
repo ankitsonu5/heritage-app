@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 
-import { api, catalogApi, clearToken, errorMessage, fileUrl, getToken, setToken, Order, Overview, Page, Person, Stats, TestItem } from './api';
+import { api, clearToken, errorMessage, fileUrl, getToken, setToken, Order, Overview, Page, Person, Stats, TestItem } from './api';
 import { AgentChart, PipelineChart, TrendChart } from './charts';
 import { Icon } from './Icon';
 import { Lang, LangContext, useLang } from './i18n';
@@ -1093,7 +1093,7 @@ function LabCatalog() {
   const [edit, setEdit] = useState(blankTest);
   const query = useQuery({
     queryKey: ['catalog', 'lab'],
-    queryFn: async () => (await catalogApi.get<LabCatalogItem[]>('/lab-test-catalog')).data,
+    queryFn: async () => (await api.get<LabCatalogItem[]>('/test-catalog')).data,
     staleTime: 5 * 60_000,
   });
 
@@ -1114,7 +1114,7 @@ function LabCatalog() {
 
   const update = useMutation({
     mutationFn: async ({ id, body }: { id: string; body: Record<string, unknown> }) =>
-      (await catalogApi.patch<LabCatalogItem>('/lab-test-catalog', body, { params: { id } })).data,
+      (await api.patch<LabCatalogItem>(`/test-catalog/${id}`, body)).data,
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ['catalog', 'lab'] });
       setEditing(null);

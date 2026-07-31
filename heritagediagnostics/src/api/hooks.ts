@@ -42,6 +42,17 @@ export function useMyOrders() {
   });
 }
 
+export type ProContact = { id: string; name: string; phone: string } | null;
+
+export function useProContact(enabled = true) {
+  return useQuery({
+    queryKey: ['staff', 'pro-contact'],
+    queryFn: async () => (await api.get<ProContact>('/staff/pro-contact')).data,
+    enabled,
+    staleTime: 60_000,
+  });
+}
+
 // On web the picker hands back a real File, which FormData knows how to encode.
 // On a device there is no File, so React Native's {uri, type, name} shape is used.
 function appendFile(form: FormData, field: string, file: PickedFile, fallbackName: string) {

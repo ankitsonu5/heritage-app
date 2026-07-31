@@ -491,6 +491,12 @@ test('only an admin can create staff — nobody can make themselves a PRO', asyn
   assert.equal(login.status, 200);
   assert.equal(login.body.user.role, 'pro');
 
+  // Patient contact also follows the admin-created active PRO; the APK contains
+  // no hardcoded desk number.
+  const contact = await api('GET', '/api/staff/pro-contact', { token: patient });
+  assert.equal(contact.status, 200);
+  assert.equal(contact.body.phone, newStaff.phone);
+
   // Deactivating locks them out without erasing their name from past orders.
   await api('PATCH', `/api/admin/staff/${created.body._id}`, { token: admin, body: { active: false } });
   const locked = await api('POST', '/api/auth/staff-login', {
