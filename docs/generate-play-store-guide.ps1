@@ -38,7 +38,10 @@ try {
     $selection.Style = 'Subtitle'
     $selection.TypeText('Google Play Store Publishing Guide')
     $selection.TypeParagraph()
-    Add-Text('Project-specific step-by-step checklist | Version 1.2 (Code 3) | Updated 31 July 2026')
+    Add-Text('Project-specific step-by-step checklist | Version 1.2 (Code 3) | Updated 1 August 2026')
+
+    Add-Heading 'Quick order: pehle kya, phir kya'
+    Add-Text('1. Policy pages ko GitHub par push karein. 2. Render deploy complete hone dein. 3. Dono HTTPS URLs browser mein check karein. 4. Play Console mein app create karein. 5. Store listing aur App Content forms bharein. 6. AAB ko Internal testing mein upload karein. 7. Real phone par testing karein. 8. Zarurat ho to 12 testers ke saath 14-day Closed test complete karein. 9. Production access lekar final release submit karein.')
 
     Add-Heading '1. Aapke project ki ready information'
     Add-Text('App name: Heritage Diagnostics')
@@ -79,10 +82,19 @@ try {
 
     Add-Heading '5. Privacy Policy aur Account Deletion URL'
     Add-Text('Repository documents: docs/PRIVACY_POLICY.md, docs/ACCOUNT_DELETION.md aur docs/PLAY_STORE_DATA_SAFETY.md')
-    Add-Check('Privacy Policy ko public HTTPS webpage par publish karein; local file ya Google Drive private link valid nahi hai.')
-    Add-Check('Account deletion instructions ko public HTTPS webpage par publish karein.')
+    Add-Text('Public pages project mein ready hain: backend/public/privacy-policy.html aur backend/public/account-deletion.html')
+    Add-Text('Terminal mein ek-ek karke chalayein:')
+    Add-Text('git add backend/src/app.js backend/public')
+    Add-Text('git commit -m "Add privacy policy and account deletion pages"')
+    Add-Text('git push')
+    Add-Check('Git push ke baad Render dashboard mein backend service ka deploy Live hone dein.')
+    Add-Check('Browser mein https://dapp.heritageimshospital.com/privacy-policy open karke check karein.')
+    Add-Check('Browser mein https://dapp.heritageimshospital.com/account-deletion open karke check karein.')
+    Add-Check('Dono pages bina login, bina Cannot GET error, public HTTPS par open hone chahiye.')
     Add-Check('Play Console > Policy and programs > App content mein Privacy Policy URL enter karein.')
-    Add-Text('BLOCKER: Public Privacy Policy URL aur Account Deletion URL live hone ke bina final submission na karein.')
+    Add-Text('Privacy Policy URL: https://dapp.heritageimshospital.com/privacy-policy')
+    Add-Text('Account Deletion URL: https://dapp.heritageimshospital.com/account-deletion')
+    Add-Text('BLOCKER: Render deploy ke baad URLs live verify kiye bina final submission na karein.')
 
     Add-Heading '6. App Content declarations'
     Add-Text('Policy and programs > App content mein har section complete karein:')

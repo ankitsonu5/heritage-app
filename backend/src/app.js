@@ -41,6 +41,12 @@ app.use(cors({ origin: allowedOrigins?.length ? allowedOrigins : '*' }));
 app.use(express.json());
 app.use('/uploads', express.static(uploadRoot));
 
+// Public policy pages required by Google Play. These deliberately live outside
+// `/api`, need no login, and are served over the same HTTPS production domain as
+// the app backend. `extensions` keeps the public URLs clean (no `.html` suffix).
+const publicRoot = path.join(__dirname, '..', 'public');
+app.use(express.static(publicRoot, { extensions: ['html'] }));
+
 const wrap = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 const fail = (status, code, message) => Object.assign(new Error(code), { status, code, message });
 

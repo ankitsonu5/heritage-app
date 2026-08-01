@@ -38,7 +38,7 @@ subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
 subtitle.add_run("Google Play Store Publishing Guide")
 meta = document.add_paragraph()
 meta.alignment = WD_ALIGN_PARAGRAPH.CENTER
-meta.add_run("Project-specific step-by-step checklist | Version 1.2 (Code 3) | Updated 31 July 2026")
+meta.add_run("Project-specific step-by-step checklist | Version 1.2 (Code 3) | Updated 1 August 2026")
 
 started = False
 pattern = re.compile(
