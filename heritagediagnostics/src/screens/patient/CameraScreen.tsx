@@ -44,9 +44,12 @@ export default function CameraScreen() {
 
       if (picked.length) setPhotos(prev => [...prev, ...picked].slice(0, MAX_PHOTOS));
     } catch (error) {
+      const permissionMessage = error instanceof PermissionDenied
+        ? tr(error.permission === 'gallery' ? 'galleryPermission' : 'cameraPermission', lang)
+        : null;
       show(
         error instanceof PermissionDenied ? 'warning' : 'error',
-        error instanceof PermissionDenied ? tr('cameraPermission', lang) : errorMessage(error),
+        permissionMessage ?? errorMessage(error),
       );
     }
   };

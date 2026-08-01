@@ -9,14 +9,39 @@ import { pick, types, errorCodes, isErrorWithCode } from '@react-native-document
 // `file` is only ever set by the web variant; native uploads use {uri,type,name}.
 export type PickedFile = { uri: string; type?: string; name?: string; file?: File };
 
-export class PermissionDenied extends Error {}
+export class PermissionDenied extends Error {
+  constructor(public readonly permission: 'camera' | 'gallery') {
+    super(`${permission}_denied`);
+    this.name = 'PermissionDenied';
+  }
+}
+
+async function requestGalleryAccess() {
+  if (Platform.OS !== 'android') return;
+
+  // Android 13+ uses the system Photo Picker through react-native-image-picker.
+  // It grants access only to the photos the patient selects, so requesting broad
+  // READ_MEDIA_IMAGES access here would be unnecessary and can violate Google
+  // Play's Photo and Video Permissions policy. Android 12 and below still need
+  // the legacy runtime permission before their gallery can be opened.
+  if (Number(Platform.Version) >= 33) return;
+
+  const permission = PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE;
+  const alreadyGranted = await PermissionsAndroid.check(permission);
+  if (alreadyGranted) return;
+
+  const result = await PermissionsAndroid.request(permission);
+  if (result !== PermissionsAndroid.RESULTS.GRANTED) {
+    throw new PermissionDenied('gallery');
+  }
+}
 
 export async function capturePhoto(): Promise<PickedFile | null> {
   // Permission belongs with the camera call, not in the screen — the web variant
   // has no equivalent and the screen should not have to know that.
   if (Platform.OS === 'android') {
     const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
-    if (granted !== PermissionsAndroid.RESULTS.GRANTED) throw new PermissionDenied('camera_denied');
+    if (granted !== PermissionsAndroid.RESULTS.GRANTED) throw new PermissionDenied('camera');
   }
 
   const result = await launchCamera({
@@ -31,6 +56,7 @@ export async function capturePhoto(): Promise<PickedFile | null> {
 // The prescription may already be a photo in the gallery — a relative often sends
 // it over WhatsApp rather than the patient photographing it themselves.
 export async function pickFromGallery(): Promise<PickedFile | null> {
+  await requestGalleryAccess();
   const result = await launchImageLibrary({ mediaType: 'photo', quality: 0.8, selectionLimit: 1 });
   if (result.errorMessage) throw new Error(result.errorMessage);
   const asset = result.assets?.[0];
@@ -41,6 +67,7 @@ export async function pickFromGallery(): Promise<PickedFile | null> {
 // A prescription often runs to more than one page. selectionLimit:0 lets the
 // gallery return as many as the patient ticks; we cap the total in the screen.
 export async function pickManyFromGallery(limit = 6): Promise<PickedFile[]> {
+  await requestGalleryAccess();
   const result = await launchImageLibrary({ mediaType: 'photo', quality: 0.8, selectionLimit: limit });
   if (result.errorMessage) throw new Error(result.errorMessage);
   return (result.assets ?? [])

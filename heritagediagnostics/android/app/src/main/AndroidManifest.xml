@@ -4,10 +4,9 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Reading a prescription the patient already has in their gallery.
-         READ_MEDIA_IMAGES is the Android 13+ permission; READ_EXTERNAL_STORAGE
-         covers older phones, which is most of this app's users. -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- Android 12 and below need legacy read access before opening their gallery.
+         Android 13+ uses the system Photo Picker, which grants access only to the
+         images selected by the patient and needs no broad READ_MEDIA_IMAGES access. -->
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />

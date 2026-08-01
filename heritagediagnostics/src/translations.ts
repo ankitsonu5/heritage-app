@@ -136,6 +136,7 @@ const copy: Record<string, [string, string]> = {
   voiceGuidance: ['आवाज़ मार्गदर्शन', 'Voice guidance'], listen: ['आवाज़ में सुनें', 'Listen'],
   enterPhone: ['सही 10 अंकों का मोबाइल नंबर डालें।', 'Enter a valid 10-digit mobile number.'],
   cameraPermission: ['कैमरा permission आवश्यक है।', 'Camera permission is required.'],
+  galleryPermission: ['गैलरी से फोटो चुनने की permission आवश्यक है।', 'Gallery permission is required to choose photos.'],
   otpLogin: ['OTP से आसान और सुरक्षित लॉगिन', 'Simple and secure OTP login'],
   photoHint: ['फोटो खींचें — बाकी हम संभालेंगे', 'Take a photo — we handle the rest'],
   testsAwaiting: ['जांच की पुष्टि बाकी', 'Tests awaiting confirmation'],
