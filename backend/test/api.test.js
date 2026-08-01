@@ -507,6 +507,16 @@ test('only an admin can create staff — nobody can make themselves a PRO', asyn
   assert.equal(locked.status, 401);
 });
 
+test('Play policy pages are public below the production API prefix', async () => {
+  const privacy = await fetch(`${base}/api/privacy-policy`);
+  assert.equal(privacy.status, 200);
+  assert.match(await privacy.text(), /Privacy Policy \| Heritage Diagnostics/);
+
+  const deletion = await fetch(`${base}/api/account-deletion`);
+  assert.equal(deletion.status, 200);
+  assert.match(await deletion.text(), /Submit deletion request/);
+});
+
 test('public account deletion requests are validated and saved for verification', async () => {
   const invalid = await api('POST', '/api/account-deletion-requests', {
     body: { name: 'Test User', phone: '123' },

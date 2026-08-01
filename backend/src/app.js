@@ -53,6 +53,14 @@ app.use(express.static(publicRoot, { extensions: ['html'] }));
 const wrap = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 const fail = (status, code, message) => Object.assign(new Error(code), { status, code, message });
 
+// Production routes the backend only below `/api`; expose the Play policy pages
+// there as well as at their direct static paths. This prevents the reverse proxy's
+// admin-SPA fallback from returning the dashboard HTML for a policy URL.
+app.get('/api/privacy-policy', (_req, res) =>
+  res.sendFile(path.join(publicRoot, 'privacy-policy.html')));
+app.get('/api/account-deletion', (_req, res) =>
+  res.sendFile(path.join(publicRoot, 'account-deletion.html')));
+
 // LAB accounts need enough data to identify a sample and prepare its report, but
 // not the admin/PRO view of the patient. Keep this restriction on the server (not
 // merely hidden in the web UI), so a LAB user cannot recover phone, address,
