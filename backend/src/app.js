@@ -6,7 +6,10 @@ const cors = require('cors');
 const multer = require('multer');
 const bcrypt = require('bcryptjs');
 
-const { Patient, ArchivedPatient, Staff, Order, OrderStatusHistory, Notification, TestCatalog } = require('./models');
+const {
+  Patient, ArchivedPatient, Staff, Order, OrderStatusHistory, Notification,
+  AccountDeletionRequest, TestCatalog,
+} = require('./models');
 const { sign, auth, allow, hashOtp, compareOtp } = require('./auth');
 const { STATUS, STEPS, QUEUES, stepIndex, ALL_STATUSES } = require('./status');
 const { moveTo, populateOrder } = require('./lifecycle');
@@ -133,6 +136,34 @@ const paginatedList = async (Model, baseFilter, req) => {
 
 app.get('/api/health', wrap(async (_req, res) =>
   res.json({ ok: true, service: 'heritage-diagnostics-api', orders: await Order.countDocuments() })));
+
+// Public request endpoint linked from the Google Play account-deletion page.
+// This never deletes immediately: a phone number alone is not proof of ownership.
+// Staff verify the requester, then use the existing admin archive flow, which blocks
+// login while preserving only records that must remain for medical/legal purposes.
+app.post('/api/account-deletion-requests', wrap(async (req, res) => {
+  const phone = String(req.body.phone || '').replace(/\D/g, '').slice(-10);
+  const name = String(req.body.name || '').trim().slice(0, 100);
+  const email = String(req.body.email || '').trim().toLowerCase().slice(0, 160);
+
+  if (!name) throw fail(400, 'name_required', 'Please enter the account holder name.');
+  if (!isValidPhone(phone)) throw fail(400, 'invalid_phone', 'Please enter a valid 10-digit mobile number.');
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw fail(400, 'invalid_email', 'Please enter a valid email address.');
+  }
+
+  const request = await AccountDeletionRequest.findOneAndUpdate(
+    { phone },
+    { $set: { name, email: email || undefined, status: 'pending', requestedAt: new Date() } },
+    { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true },
+  );
+
+  res.status(202).json({
+    accepted: true,
+    requestId: String(request._id),
+    message: 'Your deletion request has been received. We will verify account ownership before processing it.',
+  });
+}));
 
 /* ---------------------------------------------------------------- auth ---- */
 

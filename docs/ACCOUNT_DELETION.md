@@ -15,3 +15,4 @@ Heritage Diagnostics may contact the requester to verify account ownership. Afte
 Deleting the mobile app does not automatically delete an account.
 
 For privacy questions, contact **heritagediagnosticsvaranasi@gmail.com**.
+Phone: **740-860-2222**

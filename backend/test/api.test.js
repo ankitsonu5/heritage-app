@@ -13,7 +13,9 @@ process.env.DEV_OTP = '1234';
 process.env.NODE_ENV = 'test';
 
 const app = require('../src/app');
-const { Patient, ArchivedPatient, Staff, Order, TestCatalog } = require('../src/models');
+const {
+  Patient, ArchivedPatient, Staff, Order, AccountDeletionRequest, TestCatalog,
+} = require('../src/models');
 const { STATUS } = require('../src/status');
 
 let mongod;
@@ -503,6 +505,25 @@ test('only an admin can create staff — nobody can make themselves a PRO', asyn
     body: { username: 'intruder', password: 'hacked1' },
   });
   assert.equal(locked.status, 401);
+});
+
+test('public account deletion requests are validated and saved for verification', async () => {
+  const invalid = await api('POST', '/api/account-deletion-requests', {
+    body: { name: 'Test User', phone: '123' },
+  });
+  assert.equal(invalid.status, 400);
+  assert.equal(invalid.body.code, 'invalid_phone');
+
+  const accepted = await api('POST', '/api/account-deletion-requests', {
+    body: { name: 'Test User', phone: '9500000099', email: 'user@example.com' },
+  });
+  assert.equal(accepted.status, 202);
+  assert.equal(accepted.body.accepted, true);
+
+  const saved = await AccountDeletionRequest.findOne({ phone: '9500000099' });
+  assert.equal(saved.name, 'Test User');
+  assert.equal(saved.email, 'user@example.com');
+  assert.equal(saved.status, 'pending');
 });
 
 test('admin archives a patient without deleting their document or linked orders', async () => {

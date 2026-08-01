@@ -145,6 +145,18 @@ const notificationSchema = new mongoose.Schema({
   read: { type: Boolean, default: false },
 }, { timestamps: true });
 
+// Public Google Play account-deletion form. One row per mobile number keeps the
+// collection simple: submitting again updates the same request instead of creating
+// unlimited duplicates. It is a request only; staff must verify ownership before
+// using the existing admin archive flow to disable login and retain required records.
+const accountDeletionRequestSchema = new mongoose.Schema({
+  phone: { type: String, required: true, unique: true, index: true },
+  name: { type: String, required: true, trim: true },
+  email: { type: String, trim: true, lowercase: true },
+  status: { type: String, enum: ['pending', 'completed', 'rejected'], default: 'pending', index: true },
+  requestedAt: { type: Date, default: Date.now },
+}, { collection: 'account_deletion_requests', timestamps: true });
+
 // The master price list. The PRO picks tests from this at confirm time and the
 // server sums their rates — the amount is never typed by hand. Soft-deleted
 // (isActive:false) rather than removed, so a test that once priced an old order
@@ -163,6 +175,7 @@ module.exports = {
   Order: mongoose.model('Order', orderSchema),
   OrderStatusHistory: mongoose.model('OrderStatusHistory', statusHistorySchema),
   Notification: mongoose.model('Notification', notificationSchema),
+  AccountDeletionRequest: mongoose.model('AccountDeletionRequest', accountDeletionRequestSchema),
   TestCatalog: mongoose.model('TestCatalog', testCatalogSchema),
   Counter,
 };

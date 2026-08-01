@@ -84,4 +84,4 @@ We may update this policy when the service, legal requirements, or data practice
 **Heritage Diagnostics**  
 Varanasi, Uttar Pradesh, India  
 Email: **heritagediagnosticsvaranasi@gmail.com**
-
+Phone: **740-860-2222**
